@@ -10,7 +10,7 @@ const restaurants: NearbyRestaurant[] = [
     rating: 4.8,
     reviewCount: 312,
     priceRange: "$$$",
-    distance: "0.8 mi",
+    distance: "0.8 km",
     etaMinutes: 12,
     imageUrl:
       "https://images.unsplash.com/photo-1552566626-52f8b828add9?auto=format&fit=crop&w=900&q=80",
@@ -24,7 +24,7 @@ const restaurants: NearbyRestaurant[] = [
     rating: 4.6,
     reviewCount: 589,
     priceRange: "$$",
-    distance: "1.1 mi",
+    distance: "1.1 km",
     etaMinutes: 15,
     imageUrl:
       "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=900&q=80",
@@ -38,7 +38,7 @@ const restaurants: NearbyRestaurant[] = [
     rating: 4.9,
     reviewCount: 218,
     priceRange: "$",
-    distance: "0.3 mi",
+    distance: "0.3 km",
     etaMinutes: 6,
     imageUrl:
       "https://images.unsplash.com/photo-1447933601403-0c6688de566e?auto=format&fit=crop&w=900&q=80",
@@ -52,7 +52,7 @@ const restaurants: NearbyRestaurant[] = [
     rating: 4.7,
     reviewCount: 441,
     priceRange: "$$$",
-    distance: "1.6 mi",
+    distance: "1.6 km",
     etaMinutes: 18,
     imageUrl:
       "https://images.unsplash.com/photo-1504674900247-0877df9cc836?auto=format&fit=crop&w=900&q=80",
@@ -65,7 +65,7 @@ const restaurants: NearbyRestaurant[] = [
     rating: 4.5,
     reviewCount: 367,
     priceRange: "$$",
-    distance: "0.5 mi",
+    distance: "0.5 km",
     etaMinutes: 9,
     imageUrl:
       "https://images.unsplash.com/photo-1543353071-10c8ba85a904?auto=format&fit=crop&w=900&q=80",

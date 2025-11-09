@@ -2,6 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 
 import type { NearbyRestaurant } from "../types"
 import { RestaurantCard } from "./RestaurantCard"
+import type { JSX } from "react"
 
 export interface RestaurantListProps {
   restaurants: NearbyRestaurant[]
@@ -16,7 +17,7 @@ export function RestaurantList({
 }: RestaurantListProps): JSX.Element {
   if (restaurants.length === 0) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-muted-foreground/30 bg-muted/20 p-8 text-center">
+      <div className="flex flex-1 flex-col items-center justify-center gap-3 rounded-3xl border border-dashed bg-muted/20 p-8 text-center">
         <p className="text-base font-semibold text-foreground">No restaurants found</p>
         <p className="max-w-[260px] text-sm text-muted-foreground">
           Try updating your search or filters to discover new spots nearby.

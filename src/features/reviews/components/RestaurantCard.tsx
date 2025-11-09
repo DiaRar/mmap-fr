@@ -29,14 +29,15 @@ export function RestaurantCard({
   }
 
   return (
-    <Card className="overflow-hidden border-none bg-white/80 shadow-sm ring-1 ring-border/60 backdrop-blur">
-      <div className="relative h-40 w-full overflow-hidden">
+    <Card className="group overflow-hidden rounded-3xl border border-border/50 bg-white/90 shadow-md shadow-primary/5 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-within:-translate-y-0.5 focus-within:shadow-xl">
+      <div className="relative h-40 w-full overflow-hidden sm:h-48">
         <img
           src={restaurant.imageUrl}
           alt={restaurant.name}
-          className="h-full w-full object-cover"
+          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
           loading="lazy"
         />
+        <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute left-3 top-3 flex gap-2">
           {restaurant.isNew ? (
             <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
@@ -52,17 +53,17 @@ export function RestaurantCard({
         <button
           type="button"
           onClick={handleBookmark}
-          className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground"
+          className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           aria-label={`${isBookmarked ? "Remove bookmark for" : "Bookmark"} ${restaurant.name}`}
         >
           <Bookmark className="size-4" fill={isBookmarked ? "currentColor" : "none"} />
         </button>
       </div>
 
-      <CardHeader className="space-y-1 px-5 pb-2">
-        <CardTitle className="flex items-start justify-between text-lg tracking-tight">
-          <span>{restaurant.name}</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+      <CardHeader className="space-y-1 px-5 pb-2 sm:px-6">
+        <CardTitle className="flex items-start justify-between text-lg tracking-tight text-foreground">
+          <span className="max-w-[70%] truncate font-semibold">{restaurant.name}</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-xs font-semibold text-primary">
             <Star className="size-3.5 fill-current" />
             {restaurant.rating.toFixed(1)}
           </span>
@@ -73,7 +74,7 @@ export function RestaurantCard({
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 px-5">
+      <CardContent className="space-y-3 px-5 sm:px-6">
         <div className="flex items-center gap-3 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="size-4 text-primary" />
@@ -97,11 +98,11 @@ export function RestaurantCard({
         </div>
       </CardContent>
 
-      <CardFooter className="justify-between px-5 pb-5 pt-0">
+      <CardFooter className="justify-between px-5 pb-5 pt-0 sm:px-6">
         <div className="text-sm text-muted-foreground">
           <p>“Everything here feels curated with care.”</p>
         </div>
-        <Button variant="secondary" size="sm" className="rounded-full px-4">
+        <Button variant="secondary" size="sm" className="rounded-full px-4 transition-transform duration-300 group-hover:translate-x-0.5">
           View
         </Button>
       </CardFooter>

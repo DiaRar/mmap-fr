@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, type JSX } from "react"
 import { Filter, MapPin, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -29,7 +29,7 @@ export function RestaurantSearch({
             </p>
             <div className="flex items-center gap-1 text-sm font-semibold text-foreground">
               <MapPin className="size-4 text-primary" />
-              <span>Downtown Neo City</span>
+              <span>KAIST W8, 3rd floor, Daejeon</span>
             </div>
           </div>
           <Button

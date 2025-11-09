@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event"
 
 import type { NearbyRestaurant } from "../../types"
 import { RestaurantList } from "../RestaurantList"
+import { describe, expect, it, vi } from "vitest"
 
 const mockRestaurants: NearbyRestaurant[] = [
   {
@@ -12,7 +13,7 @@ const mockRestaurants: NearbyRestaurant[] = [
     rating: 4.2,
     reviewCount: 128,
     priceRange: "$$",
-    distance: "0.4 mi",
+    distance: "0.4 km",
     etaMinutes: 8,
     imageUrl: "https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=900&q=80",
     tags: ["Cozy", "Small plates"],
@@ -24,7 +25,7 @@ const mockRestaurants: NearbyRestaurant[] = [
     rating: 4.8,
     reviewCount: 289,
     priceRange: "$",
-    distance: "0.2 mi",
+    distance: "0.2 km",
     etaMinutes: 4,
     imageUrl: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80",
     tags: ["Workspace", "Bakery"],
