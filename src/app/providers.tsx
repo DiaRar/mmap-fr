@@ -1,4 +1,4 @@
-import type { PropsWithChildren } from 'react'
+import type { JSX, PropsWithChildren } from 'react'
 
 /**
  * AppProviders is the single place to configure global context providers,
