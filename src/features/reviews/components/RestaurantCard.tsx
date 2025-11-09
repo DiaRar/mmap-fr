@@ -1,0 +1,110 @@
+import { Bookmark, Clock, MapPin, Star } from "lucide-react"
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
+
+import type { NearbyRestaurant } from "../types"
+
+export interface RestaurantCardProps {
+  restaurant: NearbyRestaurant
+  onBookmark?: (restaurantId: string) => void
+  isBookmarked?: boolean
+}
+
+export function RestaurantCard({
+  restaurant,
+  onBookmark,
+  isBookmarked = false,
+}: RestaurantCardProps): JSX.Element {
+  const handleBookmark = () => {
+    onBookmark?.(restaurant.id)
+  }
+
+  return (
+    <Card className="overflow-hidden border-none bg-white/80 shadow-sm ring-1 ring-border/60 backdrop-blur">
+      <div className="relative h-40 w-full overflow-hidden">
+        <img
+          src={restaurant.imageUrl}
+          alt={restaurant.name}
+          className="h-full w-full object-cover"
+          loading="lazy"
+        />
+        <div className="absolute left-3 top-3 flex gap-2">
+          {restaurant.isNew ? (
+            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
+              New
+            </span>
+          ) : null}
+          {restaurant.isPopular ? (
+            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground shadow">
+              Popular
+            </span>
+          ) : null}
+        </div>
+        <button
+          type="button"
+          onClick={handleBookmark}
+          className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground"
+          aria-label={`${isBookmarked ? "Remove bookmark for" : "Bookmark"} ${restaurant.name}`}
+        >
+          <Bookmark className="size-4" fill={isBookmarked ? "currentColor" : "none"} />
+        </button>
+      </div>
+
+      <CardHeader className="space-y-1 px-5 pb-2">
+        <CardTitle className="flex items-start justify-between text-lg tracking-tight">
+          <span>{restaurant.name}</span>
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">
+            <Star className="size-3.5 fill-current" />
+            {restaurant.rating.toFixed(1)}
+          </span>
+        </CardTitle>
+        <CardDescription className="text-sm text-muted-foreground">
+          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()}{" "}
+          reviews
+        </CardDescription>
+      </CardHeader>
+
+      <CardContent className="space-y-3 px-5">
+        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <MapPin className="size-4 text-primary" />
+            {restaurant.distance}
+          </span>
+          <Separator orientation="vertical" className="h-4 bg-border/60" />
+          <span className="inline-flex items-center gap-1.5">
+            <Clock className="size-4 text-primary" />
+            {restaurant.etaMinutes} min
+          </span>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {restaurant.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
+      </CardContent>
+
+      <CardFooter className="justify-between px-5 pb-5 pt-0">
+        <div className="text-sm text-muted-foreground">
+          <p>“Everything here feels curated with care.”</p>
+        </div>
+        <Button variant="secondary" size="sm" className="rounded-full px-4">
+          View
+        </Button>
+      </CardFooter>
+    </Card>
+  )
+}

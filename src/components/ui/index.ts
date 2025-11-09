@@ -1,10 +1,9 @@
-export { Button } from './button'
-export type { ButtonProps } from './button'
-export { Input } from './input'
-export type { InputProps } from './input'
-export { Card, CardBody, CardMedia } from './card'
-export type { CardBodyProps, CardMediaProps, CardProps } from './card'
-export { ScrollArea } from './scroll-area'
-export type { ScrollAreaProps } from './scroll-area'
-export { Separator } from './separator'
-export type { SeparatorProps } from './separator'
+export { Button, buttonVariants } from "./button"
+export type { ButtonProps } from "./button"
+export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "./card"
+export { Input } from "./input"
+export type { InputProps } from "./input"
+export { ScrollArea, ScrollBar } from "./scroll-area"
+export type { ScrollAreaProps } from "./scroll-area"
+export { Separator } from "./separator"
+export type { SeparatorProps } from "./separator"
