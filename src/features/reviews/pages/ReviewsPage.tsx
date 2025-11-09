@@ -8,6 +8,7 @@ import { useNearbyRestaurants } from "@/lib/data/restaurants";
 import { AddRestaurantCTA } from "../components/AddRestaurantCTA";
 import { RestaurantList } from "../components/RestaurantList";
 import { RestaurantSearch } from "../components/RestaurantSearch";
+import { SuggestRestaurantDrawer } from "../components/SuggestRestaurantDrawer";
 
 export function ReviewsPage(): JSX.Element {
   const { restaurants } = useNearbyRestaurants();
@@ -41,6 +42,8 @@ export function ReviewsPage(): JSX.Element {
     }));
   };
 
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+
   const bookmarkedCount = useMemo(
     () => Object.values(bookmarkedIds).filter(Boolean).length,
     [bookmarkedIds]
@@ -72,7 +75,7 @@ export function ReviewsPage(): JSX.Element {
           </header>
 
           <div className="hidden lg:block">
-            <AddRestaurantCTA />
+            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
           </div>
 
           <div className="hidden lg:block">
@@ -90,7 +93,7 @@ export function ReviewsPage(): JSX.Element {
           </div>
           <Separator className="bg-border/60 lg:hidden" />
           <div className="lg:hidden">
-            <AddRestaurantCTA />
+            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
           </div>
         </section>
       </div>
@@ -102,6 +105,8 @@ export function ReviewsPage(): JSX.Element {
           <BottomNav />
         </div>
       </footer>
+
+      <SuggestRestaurantDrawer open={isSuggestOpen} onOpenChange={setIsSuggestOpen} />
     </div>
   );
 }

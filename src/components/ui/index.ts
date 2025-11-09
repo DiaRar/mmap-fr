@@ -4,3 +4,4 @@ export { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 export { Input } from "./input"
 export { ScrollArea, ScrollBar } from "./scroll-area"
 export { Separator } from "./separator"
+export { Drawer, DrawerContent, DrawerHeader, DrawerFooter, DrawerTitle, DrawerDescription } from "./drawer"
