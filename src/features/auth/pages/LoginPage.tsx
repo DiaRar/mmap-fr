@@ -12,10 +12,13 @@ import {
   AnimatePresence,
   MotionConfig,
   motion,
+  useInView,
   useMotionTemplate,
   useMotionValue,
+  useReducedMotion,
   useSpring,
   useTransform,
+  type Transition,
 } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
 
@@ -25,6 +28,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { AuthCard, AuthDivider, AuthFooterLink, AuthLayout } from '../components';
+import { cn } from '@/lib/utils';
 
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
@@ -32,8 +36,6 @@ export function LoginPage(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
   const pendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
-  const animationFrameRef = useRef<number | null>(null);
-  const isInteractingRef = useRef(false);
 
   const tiltX = useMotionValue(0);
   const tiltY = useMotionValue(0);
@@ -46,8 +48,13 @@ export function LoginPage(): JSX.Element {
   const rotateY = useSpring(tiltY, springConfig);
   const glowOpacity = useSpring(sparkOpacity, { stiffness: 120, damping: 20 });
 
+  const prefersReducedMotion = useReducedMotion();
   const [isCoarsePointer, setIsCoarsePointer] = useState(false);
-  const [autoFloatCycle, setAutoFloatCycle] = useState(0);
+  const cardInView = useInView(cardContainerRef, { amount: 0.6 });
+
+  const enableInteractiveTilt = !prefersReducedMotion && !isCoarsePointer;
+  const enableAmbientLoop = !prefersReducedMotion && isCoarsePointer;
+  const [focusedField, setFocusedField] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -73,41 +80,11 @@ export function LoginPage(): JSX.Element {
   };
 
   useEffect(() => {
-    if (!isCoarsePointer || isInteractingRef.current) {
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-      return;
+    if (!enableInteractiveTilt) {
+      resetCardTilt();
     }
-
-    let startTime: number | null = null;
-
-    const animate = (time: number) => {
-      if (startTime === null) {
-        startTime = time;
-      }
-
-      const progress = (time - startTime) / 1000;
-
-      tiltX.set(Math.sin(progress * 1.2) * 4);
-      tiltY.set(Math.cos(progress) * 4);
-      glowX.set(50 + Math.sin(progress * 0.8) * 8);
-      glowY.set(45 + Math.cos(progress * 0.9) * 8);
-      sparkOpacity.set(0.45 + Math.sin(progress * 1.4) * 0.12);
-
-      animationFrameRef.current = requestAnimationFrame(animate);
-    };
-
-    animationFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      if (animationFrameRef.current !== null) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = null;
-      }
-    };
-  }, [isCoarsePointer, autoFloatCycle, glowX, glowY, sparkOpacity, tiltX, tiltY]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [enableInteractiveTilt]);
 
   const cardShadow = useTransform([rotateX, rotateY], ([x, y]) => {
     const nextX = typeof x === 'number' ? x : 0;
@@ -115,15 +92,83 @@ export function LoginPage(): JSX.Element {
     return `0px ${Math.max(12 - nextX, 6)}px ${32 + Math.abs(nextY) * 2}px rgba(15, 23, 42, 0.25)`;
   });
   const glowBackground = useMotionTemplate`radial-gradient(120% 140% at ${glowX}% ${glowY}%, rgba(14, 165, 233, ${glowOpacity}), rgba(59, 130, 246, 0.15), transparent 70%)`;
+  const staticGlowBackground =
+    'radial-gradient(120% 140% at 50% 40%, rgba(14, 165, 233, 0.45), rgba(59, 130, 246, 0.12), transparent 70%)';
+
+  const ambientInitial = {
+    opacity: 0,
+    scale: enableInteractiveTilt ? 0.9 : enableAmbientLoop ? 0.96 : 0.98,
+  };
+  const ambientAnimate = enableInteractiveTilt
+    ? { opacity: 0.7, scale: 1 }
+    : enableAmbientLoop
+      ? { opacity: [0.45, 0.65, 0.45], scale: [0.95, 1.02, 0.95] }
+      : { opacity: 0.55, scale: 1 };
+  const ambientTransition: Transition = enableInteractiveTilt
+    ? { duration: 0.8, delay: 0.15, ease: 'easeOut' }
+    : enableAmbientLoop
+      ? { duration: 9, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+      : { duration: 0.6, ease: 'easeOut' };
+  const ambientBlurClass = enableInteractiveTilt ? 'blur-3xl' : 'blur-2xl sm:blur-3xl';
+
+  const cardInitial = {
+    opacity: 0,
+    y: enableInteractiveTilt ? 32 : enableAmbientLoop ? 20 : 18,
+    scale: 0.97,
+  };
+  const cardAnimate = enableInteractiveTilt
+    ? { opacity: 1, y: 0, scale: 1 }
+    : enableAmbientLoop
+      ? { opacity: 1, y: [0, -6, 0], scale: [1, 1.01, 1] }
+      : { opacity: 1, y: 0, scale: 1 };
+  const cardTransition: Transition = enableInteractiveTilt
+    ? { duration: 0.6, ease: 'easeOut' }
+    : enableAmbientLoop
+      ? { duration: 10, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+      : { duration: 0.6, ease: 'easeOut' };
+  const cardMotionStyle = enableInteractiveTilt
+    ? { rotateX, rotateY, transformPerspective: 1200, boxShadow: cardShadow }
+    : undefined;
+
+  const glowInitial = {
+    opacity: enableInteractiveTilt ? 0.6 : enableAmbientLoop ? 0.45 : 0.4,
+    scale: 1,
+  };
+  const glowAnimate = enableInteractiveTilt
+    ? undefined
+    : enableAmbientLoop
+      ? { opacity: [0.4, 0.55, 0.4], scale: [0.98, 1.05, 0.98] }
+      : undefined;
+  const glowTransition: Transition | undefined = enableInteractiveTilt
+    ? undefined
+    : enableAmbientLoop
+      ? { duration: 10, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+      : undefined;
+  const glowStyle = enableInteractiveTilt
+    ? { background: glowBackground }
+    : { background: staticGlowBackground };
+  const showMobileAura = enableAmbientLoop;
+
+  const fieldBaseClasses =
+    'space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition-colors duration-200';
+  const fieldFocusClasses: Record<string, string> = {
+    email:
+      'border-sky-400/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)] shadow-sky-400/10',
+    password:
+      'border-violet-400/60 shadow-[0_0_0_1px_rgba(139,92,246,0.3)] shadow-violet-400/10',
+  };
+
+  const handleFieldFocus = (fieldId: string) => {
+    setFocusedField(fieldId);
+  };
+
+  const handleFieldBlur = (fieldId: string) => {
+    setFocusedField((prev) => (prev === fieldId ? null : prev));
+  };
 
   const handleCardPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (!cardContainerRef.current) {
+    if (!enableInteractiveTilt || !cardContainerRef.current || !cardInView) {
       return;
-    }
-    isInteractingRef.current = true;
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
     }
     const rect = cardContainerRef.current.getBoundingClientRect();
     const x = event.clientX - rect.left;
@@ -142,15 +187,14 @@ export function LoginPage(): JSX.Element {
   };
 
   const resetCardTilt = () => {
-    isInteractingRef.current = false;
+    if (!enableInteractiveTilt) {
+      return;
+    }
     tiltX.set(0);
     tiltY.set(0);
     glowX.set(50);
     glowY.set(40);
     sparkOpacity.set(0.35);
-    if (isCoarsePointer) {
-      setAutoFloatCycle((cycle) => cycle + 1);
-    }
   };
 
   useEffect(
@@ -196,10 +240,10 @@ export function LoginPage(): JSX.Element {
         <div className="relative">
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 blur-3xl"
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 0.7, scale: 1 }}
-            transition={{ duration: 0.8, delay: 0.15 }}
+            className={`pointer-events-none absolute inset-0 -z-10 ${ambientBlurClass}`}
+            initial={ambientInitial}
+            animate={ambientAnimate}
+            transition={ambientTransition}
             style={{
               background:
                 'radial-gradient(90% 95% at 10% 10%, rgba(192, 132, 252, 0.35), transparent 60%), radial-gradient(90% 110% at 90% 90%, rgba(14, 165, 233, 0.35), transparent 70%)',
@@ -208,32 +252,29 @@ export function LoginPage(): JSX.Element {
 
           <motion.div
             ref={cardContainerRef}
-            className="relative"
-            initial={{ opacity: 0, y: 32, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
+            className="relative rounded-xl"
+            initial={cardInitial}
+            animate={cardAnimate}
+            transition={cardTransition}
             whileTap={{ scale: 0.995 }}
-            onPointerMove={handleCardPointerMove}
-            onPointerEnter={() => {
-              isInteractingRef.current = true;
-              if (animationFrameRef.current !== null) {
-                cancelAnimationFrame(animationFrameRef.current);
-                animationFrameRef.current = null;
-              }
-              sparkOpacity.set(0.55);
-            }}
-            onPointerUp={resetCardTilt}
-            onPointerLeave={resetCardTilt}
-            style={{
-              rotateX,
-              rotateY,
-              transformPerspective: 1200,
-              boxShadow: cardShadow,
-            }}
+            onPointerMove={enableInteractiveTilt ? handleCardPointerMove : undefined}
+            onPointerEnter={enableInteractiveTilt ? () => sparkOpacity.set(0.55) : undefined}
+            onPointerUp={enableInteractiveTilt ? resetCardTilt : undefined}
+            onPointerLeave={enableInteractiveTilt ? resetCardTilt : undefined}
+            style={cardMotionStyle}
           >
+            {showMobileAura ? (
+              <div className="auth-card-aura-wrapper">
+                <div className="auth-card-aura auth-card-aura--cool" />
+              </div>
+            ) : null}
             <motion.div
               aria-hidden
               className="pointer-events-none absolute inset-0 -z-10 rounded-3xl opacity-60 blur-2xl"
-              style={{ background: glowBackground }}
+              initial={glowInitial}
+              animate={glowAnimate}
+              transition={glowTransition}
+              style={glowStyle}
             />
 
             <AuthCard
@@ -275,43 +316,61 @@ export function LoginPage(): JSX.Element {
                 }}
               >
                 <motion.div
-                  className="space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition"
+                  className={cn(
+                    fieldBaseClasses,
+                    focusedField === 'email' && fieldFocusClasses.email
+                  )}
                   variants={{
                     hidden: { opacity: 0, y: 22 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  whileHover={{ borderColor: 'rgba(14, 165, 233, 0.4)' }}
+                  whileHover={
+                    enableInteractiveTilt
+                      ? { borderColor: 'rgba(14, 165, 233, 0.4)' }
+                      : undefined
+                  }
                 >
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    required
-                    disabled={isLoading}
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              type="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              required
+              disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                  />
+                    onFocus={() => handleFieldFocus('email')}
+                    onBlur={() => handleFieldBlur('email')}
+            />
                 </motion.div>
 
                 <motion.div
-                  className="space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition"
+                  className={cn(
+                    fieldBaseClasses,
+                    focusedField === 'password' && fieldFocusClasses.password
+                  )}
                   variants={{
                     hidden: { opacity: 0, y: 22 },
                     visible: { opacity: 1, y: 0 },
                   }}
-                  whileHover={{ borderColor: 'rgba(192, 132, 252, 0.45)' }}
+                  whileHover={
+                    enableInteractiveTilt
+                      ? { borderColor: 'rgba(192, 132, 252, 0.45)' }
+                      : undefined
+                  }
                 >
-                  <Label htmlFor="password">Password</Label>
-                  <Input
-                    id="password"
-                    type="password"
-                    autoComplete="current-password"
-                    placeholder="Your password"
-                    required
-                    disabled={isLoading}
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Your password"
+              required
+              disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                  />
+                    onFocus={() => handleFieldFocus('password')}
+                    onBlur={() => handleFieldBlur('password')}
+            />
                 </motion.div>
 
                 <motion.div
@@ -322,22 +381,22 @@ export function LoginPage(): JSX.Element {
                   }}
                 >
                   <motion.label
-                    htmlFor="remember"
+              htmlFor="remember"
                     className="flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 transition"
                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(148, 163, 184, 0.15)' }}
                     whileTap={{ scale: 0.98 }}
-                  >
-                    <Checkbox id="remember" disabled={isLoading} />
-                    <span>Keep me signed in</span>
+            >
+              <Checkbox id="remember" disabled={isLoading} />
+              <span>Keep me signed in</span>
                   </motion.label>
                   <motion.button
-                    type="button"
-                    className="text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
-                    disabled={isLoading}
+              type="button"
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
+              disabled={isLoading}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.96 }}
-                  >
-                    Forgot password?
+            >
+              Forgot password?
                   </motion.button>
                 </motion.div>
 
@@ -358,7 +417,7 @@ export function LoginPage(): JSX.Element {
                       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                     >
                       <AnimatePresence mode="wait" initial={false}>
-                        {isLoading ? (
+            {isLoading ? (
                           <motion.span
                             key="loading"
                             className="flex items-center justify-center gap-2"
@@ -376,7 +435,7 @@ export function LoginPage(): JSX.Element {
                                 duration: 1,
                               }}
                             >
-                              <Spinner className="size-4" />
+                <Spinner className="size-4" />
                             </motion.span>
                             <motion.span
                               initial={{ opacity: 0 }}
@@ -386,7 +445,7 @@ export function LoginPage(): JSX.Element {
                               Signing in…
                             </motion.span>
                           </motion.span>
-                        ) : (
+            ) : (
                           <motion.span
                             key="enter"
                             initial={{ opacity: 0, y: -6 }}
@@ -396,10 +455,10 @@ export function LoginPage(): JSX.Element {
                           >
                             Sign in
                           </motion.span>
-                        )}
+            )}
                       </AnimatePresence>
                     </motion.button>
-                  </Button>
+          </Button>
                 </motion.div>
               </motion.form>
 
@@ -421,7 +480,7 @@ export function LoginPage(): JSX.Element {
                     visible: { opacity: 1, y: 0 },
                   }}
                 >
-                  <AuthDivider />
+          <AuthDivider />
                 </motion.div>
 
                 <motion.div

@@ -12,7 +12,7 @@ export function AuthLayout({
 }: AuthLayoutProps): JSX.Element {
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-background via-background to-muted/30">
-      <div className="flex flex-1 flex-col items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
+      <div className="flex flex-1 flex-col items-center justify-start px-4 pt-8 sm:px-6 lg:px-8 md:justify-center md:pt-0 lg:justify-center lg:pt-0">
         <div className={cn("w-full max-w-md space-y-6", className)}>
           {children}
         </div>
