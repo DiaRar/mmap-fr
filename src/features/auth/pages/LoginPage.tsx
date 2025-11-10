@@ -1,6 +1,6 @@
 import { Github, Mail } from "lucide-react";
 import {
-  FormEvent,
+  type FormEvent,
   useEffect,
   useMemo,
   useRef,
