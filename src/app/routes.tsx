@@ -1,35 +1,92 @@
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import type { JSX } from "react";
-
-import { LoginPage, RegisterPage } from "@/features/auth";
 import {
-  ReviewsMobileShell,
-  ReviewsPage,
-  SuggestMealPage,
-} from "@/features/reviews";
+  lazy,
+  Suspense,
+  type JSX,
+} from "react";
+
+import { Spinner } from "@/components/ui/spinner";
+
+const LoginPage = lazy(() =>
+  import("@/features/auth/pages/LoginPage").then((module) => ({
+    default: module.LoginPage,
+  })),
+);
+
+const RegisterPage = lazy(() =>
+  import("@/features/auth/pages/RegisterPage").then((module) => ({
+    default: module.RegisterPage,
+  })),
+);
+
+const ReviewsMobileShell = lazy(() =>
+  import("@/features/reviews/layouts/ReviewsMobileShell").then((module) => ({
+    default: module.ReviewsMobileShell,
+  })),
+);
+
+const ReviewsPage = lazy(() =>
+  import("@/features/reviews/pages/ReviewsPage").then((module) => ({
+    default: module.ReviewsPage,
+  })),
+);
+
+const SuggestMealPage = lazy(() =>
+  import("@/features/reviews/pages/SuggestMealPage").then((module) => ({
+    default: module.SuggestMealPage,
+  })),
+);
+
+function RouteSpinner(): JSX.Element {
+  return (
+    <div className="flex h-full w-full items-center justify-center">
+      <Spinner />
+    </div>
+  );
+}
 
 const router = createBrowserRouter([
   {
     path: "/",
-    element: <ReviewsMobileShell />,
+    element: (
+      <Suspense fallback={<RouteSpinner />}>
+        <ReviewsMobileShell />
+      </Suspense>
+    ),
     children: [
       {
         index: true,
-        element: <ReviewsPage />,
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <ReviewsPage />
+          </Suspense>
+        ),
       },
       {
         path: "suggest",
-        element: <SuggestMealPage />,
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <SuggestMealPage />
+          </Suspense>
+        ),
       },
     ],
   },
   {
     path: "/login",
-    element: <LoginPage />,
+    element: (
+      <Suspense fallback={<RouteSpinner />}>
+        <LoginPage />
+      </Suspense>
+    ),
   },
   {
     path: "/register",
-    element: <RegisterPage />,
+    element: (
+      <Suspense fallback={<RouteSpinner />}>
+        <RegisterPage />
+      </Suspense>
+    ),
   },
 ]);
 
