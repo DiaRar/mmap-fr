@@ -1,45 +1,41 @@
-import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import {
-  lazy,
-  Suspense,
-  type JSX,
-} from "react";
+import { createBrowserRouter, RouterProvider } from 'react-router-dom';
+import { lazy, Suspense, type JSX } from 'react';
 
-import { Spinner } from "@/components/ui/spinner";
+import { Spinner } from '@/components/ui/spinner';
 
 const LoginPage = lazy(() =>
-  import("@/features/auth/pages/LoginPage").then((module) => ({
+  import('@/features/auth/pages/LoginPage').then((module) => ({
     default: module.LoginPage,
-  })),
+  }))
 );
 
 const RegisterPage = lazy(() =>
-  import("@/features/auth/pages/RegisterPage").then((module) => ({
+  import('@/features/auth/pages/RegisterPage').then((module) => ({
     default: module.RegisterPage,
-  })),
+  }))
 );
 
 const ReviewsMobileShell = lazy(() =>
-  import("@/features/reviews/layouts/ReviewsMobileShell").then((module) => ({
+  import('@/features/reviews/layouts/ReviewsMobileShell').then((module) => ({
     default: module.ReviewsMobileShell,
-  })),
+  }))
 );
 
 const ReviewsPage = lazy(() =>
-  import("@/features/reviews/pages/ReviewsPage").then((module) => ({
+  import('@/features/reviews/pages/ReviewsPage').then((module) => ({
     default: module.ReviewsPage,
-  })),
+  }))
 );
 
 const SuggestMealPage = lazy(() =>
-  import("@/features/reviews/pages/SuggestMealPage").then((module) => ({
+  import('@/features/reviews/pages/SuggestMealPage').then((module) => ({
     default: module.SuggestMealPage,
-  })),
+  }))
 );
 
 function RouteSpinner(): JSX.Element {
   return (
-    <div className="flex h-full w-full items-center justify-center">
+    <div className="grid min-h-screen w-full place-items-center p-6">
       <Spinner />
     </div>
   );
@@ -47,7 +43,7 @@ function RouteSpinner(): JSX.Element {
 
 const router = createBrowserRouter([
   {
-    path: "/",
+    path: '/',
     element: (
       <Suspense fallback={<RouteSpinner />}>
         <ReviewsMobileShell />
@@ -63,7 +59,7 @@ const router = createBrowserRouter([
         ),
       },
       {
-        path: "suggest",
+        path: 'suggest',
         element: (
           <Suspense fallback={<RouteSpinner />}>
             <SuggestMealPage />
@@ -73,7 +69,7 @@ const router = createBrowserRouter([
     ],
   },
   {
-    path: "/login",
+    path: '/login',
     element: (
       <Suspense fallback={<RouteSpinner />}>
         <LoginPage />
@@ -81,7 +77,7 @@ const router = createBrowserRouter([
     ),
   },
   {
-    path: "/register",
+    path: '/register',
     element: (
       <Suspense fallback={<RouteSpinner />}>
         <RegisterPage />

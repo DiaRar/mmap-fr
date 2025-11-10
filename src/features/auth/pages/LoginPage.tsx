@@ -152,10 +152,8 @@ export function LoginPage(): JSX.Element {
   const fieldBaseClasses =
     'space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition-colors duration-200';
   const fieldFocusClasses: Record<string, string> = {
-    email:
-      'border-sky-400/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)] shadow-sky-400/10',
-    password:
-      'border-violet-400/60 shadow-[0_0_0_1px_rgba(139,92,246,0.3)] shadow-violet-400/10',
+    email: 'border-sky-400/60 shadow-[0_0_0_1px_rgba(14,165,233,0.35)] shadow-sky-400/10',
+    password: 'border-violet-400/60 shadow-[0_0_0_1px_rgba(139,92,246,0.3)] shadow-violet-400/10',
   };
 
   const handleFieldFocus = (fieldId: string) => {
@@ -325,23 +323,21 @@ export function LoginPage(): JSX.Element {
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: 'rgba(14, 165, 233, 0.4)' }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(14, 165, 233, 0.4)' } : undefined
                   }
                 >
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="email">Email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
                     onFocus={() => handleFieldFocus('email')}
                     onBlur={() => handleFieldBlur('email')}
-            />
+                  />
                 </motion.div>
 
                 <motion.div
@@ -354,23 +350,21 @@ export function LoginPage(): JSX.Element {
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: 'rgba(192, 132, 252, 0.45)' }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(192, 132, 252, 0.45)' } : undefined
                   }
                 >
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              placeholder="Your password"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="password">Password</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    autoComplete="current-password"
+                    placeholder="Your password"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
                     onFocus={() => handleFieldFocus('password')}
                     onBlur={() => handleFieldBlur('password')}
-            />
+                  />
                 </motion.div>
 
                 <motion.div
@@ -381,22 +375,22 @@ export function LoginPage(): JSX.Element {
                   }}
                 >
                   <motion.label
-              htmlFor="remember"
+                    htmlFor="remember"
                     className="flex cursor-pointer items-center gap-2 rounded-full px-2 py-1 transition"
                     whileHover={{ scale: 1.02, backgroundColor: 'rgba(148, 163, 184, 0.15)' }}
                     whileTap={{ scale: 0.98 }}
-            >
-              <Checkbox id="remember" disabled={isLoading} />
-              <span>Keep me signed in</span>
+                  >
+                    <Checkbox id="remember" disabled={isLoading} />
+                    <span>Keep me signed in</span>
                   </motion.label>
                   <motion.button
-              type="button"
-              className="text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
-              disabled={isLoading}
+                    type="button"
+                    className="text-sm font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
+                    disabled={isLoading}
                     whileHover={{ y: -1 }}
                     whileTap={{ scale: 0.96 }}
-            >
-              Forgot password?
+                  >
+                    Forgot password?
                   </motion.button>
                 </motion.div>
 
@@ -417,7 +411,7 @@ export function LoginPage(): JSX.Element {
                       transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                     >
                       <AnimatePresence mode="wait" initial={false}>
-            {isLoading ? (
+                        {isLoading ? (
                           <motion.span
                             key="loading"
                             className="flex items-center justify-center gap-2"
@@ -435,7 +429,7 @@ export function LoginPage(): JSX.Element {
                                 duration: 1,
                               }}
                             >
-                <Spinner className="size-4" />
+                              <Spinner className="size-4" />
                             </motion.span>
                             <motion.span
                               initial={{ opacity: 0 }}
@@ -445,7 +439,7 @@ export function LoginPage(): JSX.Element {
                               Signing in…
                             </motion.span>
                           </motion.span>
-            ) : (
+                        ) : (
                           <motion.span
                             key="enter"
                             initial={{ opacity: 0, y: -6 }}
@@ -455,10 +449,10 @@ export function LoginPage(): JSX.Element {
                           >
                             Sign in
                           </motion.span>
-            )}
+                        )}
                       </AnimatePresence>
                     </motion.button>
-          </Button>
+                  </Button>
                 </motion.div>
               </motion.form>
 
@@ -480,7 +474,7 @@ export function LoginPage(): JSX.Element {
                     visible: { opacity: 1, y: 0 },
                   }}
                 >
-          <AuthDivider />
+                  <AuthDivider />
                 </motion.div>
 
                 <motion.div

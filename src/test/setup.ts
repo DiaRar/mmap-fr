@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom/vitest"
+import '@testing-library/jest-dom/vitest';
 
 class ResizeObserver {
   observe() {}
@@ -6,6 +6,6 @@ class ResizeObserver {
   disconnect() {}
 }
 
-Object.defineProperty(globalThis, "ResizeObserver", {
+Object.defineProperty(globalThis, 'ResizeObserver', {
   value: ResizeObserver,
-})
+});

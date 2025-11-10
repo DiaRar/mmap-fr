@@ -1,8 +1,8 @@
-import type { JSX } from "react";
+import type { JSX } from 'react';
 
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import type { LucideIcon } from "lucide-react";
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import type { LucideIcon } from 'lucide-react';
 
 type AuthSocialButton = {
   id: string;
@@ -23,12 +23,7 @@ export function AuthSocialButtons({
   className,
 }: AuthSocialButtonsProps): JSX.Element {
   return (
-    <div
-      className={cn(
-        "grid gap-3 sm:grid-cols-2",
-        className
-      )}
-    >
+    <div className={cn('grid gap-3 sm:grid-cols-2', className)}>
       {providers.map((provider) => (
         <Button
           key={provider.id}

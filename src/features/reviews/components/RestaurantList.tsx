@@ -1,13 +1,13 @@
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { ScrollArea } from '@/components/ui/scroll-area';
 
-import type { NearbyRestaurant } from "../types"
-import { RestaurantCard } from "./RestaurantCard"
-import type { JSX } from "react"
+import type { NearbyRestaurant } from '../types';
+import { RestaurantCard } from './RestaurantCard';
+import type { JSX } from 'react';
 
 export interface RestaurantListProps {
-  restaurants: NearbyRestaurant[]
-  onBookmark?: (restaurantId: string) => void
-  bookmarked?: Record<string, boolean>
+  restaurants: NearbyRestaurant[];
+  onBookmark?: (restaurantId: string) => void;
+  bookmarked?: Record<string, boolean>;
 }
 
 export function RestaurantList({
@@ -23,7 +23,7 @@ export function RestaurantList({
           Try updating your search or filters to discover new spots nearby.
         </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -39,5 +39,5 @@ export function RestaurantList({
         ))}
       </div>
     </ScrollArea>
-  )
+  );
 }

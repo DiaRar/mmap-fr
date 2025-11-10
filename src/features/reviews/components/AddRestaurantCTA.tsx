@@ -1,11 +1,11 @@
-import { PlusCircle } from "lucide-react"
+import { PlusCircle } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import type { JSX } from "react"
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import type { JSX } from 'react';
 
 export interface AddRestaurantCTAProps {
-  onAddClick?: () => void
+  onAddClick?: () => void;
 }
 
 export function AddRestaurantCTA({ onAddClick }: AddRestaurantCTAProps): JSX.Element {
@@ -31,5 +31,5 @@ export function AddRestaurantCTA({ onAddClick }: AddRestaurantCTAProps): JSX.Ele
         </Button>
       </CardContent>
     </Card>
-  )
+  );
 }

@@ -1,38 +1,38 @@
-import { useCallback, useState, type JSX } from "react"
-import { motion } from "motion/react"
-import { Filter, MapPin, Search } from "lucide-react"
+import { useCallback, useState, type JSX } from 'react';
+import { motion } from 'motion/react';
+import { Filter, MapPin, Search } from 'lucide-react';
 
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { ButtonGroup } from "@/components/ui/button-group"
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { ButtonGroup } from '@/components/ui/button-group';
 
 export interface RestaurantSearchProps {
-  value: string
-  onChange: (value: string) => void
-  onFilterClick?: () => void
+  value: string;
+  onChange: (value: string) => void;
+  onFilterClick?: () => void;
 }
 
-const trendingFilters = ["Open Now", "High Rated", "Outdoor Seating"]
+const trendingFilters = ['Open Now', 'High Rated', 'Outdoor Seating'];
 
 export function RestaurantSearch({
   value,
   onChange,
   onFilterClick,
 }: RestaurantSearchProps): JSX.Element {
-  const [activeFilters, setActiveFilters] = useState<string[]>([])
+  const [activeFilters, setActiveFilters] = useState<string[]>([]);
 
   const handleFilterClick = useCallback((filter: string) => {
     setActiveFilters((current) => {
-      const isActive = current.includes(filter)
+      const isActive = current.includes(filter);
 
       if (isActive) {
-        return current.filter((item) => item !== filter)
+        return current.filter((item) => item !== filter);
       }
 
-      return [...current, filter]
-    })
-  }, [])
+      return [...current, filter];
+    });
+  }, []);
 
   return (
     <section className="space-y-4">
@@ -72,30 +72,33 @@ export function RestaurantSearch({
         </div>
       </div>
 
-      <ButtonGroup className="mx-auto flex max-w-full flex-wrap justify-center gap-2" data-horizontal-scroll>
+      <ButtonGroup
+        className="mx-auto flex max-w-full flex-wrap justify-center gap-2"
+        data-horizontal-scroll
+      >
         {trendingFilters.map((filter) => {
-          const isActive = activeFilters.includes(filter)
+          const isActive = activeFilters.includes(filter);
           return (
             <motion.div
               key={filter}
               layout
               whileHover={{ y: -2 }}
               whileTap={{ scale: 0.96 }}
-              transition={{ type: "spring", stiffness: 350, damping: 18 }}
+              transition={{ type: 'spring', stiffness: 350, damping: 18 }}
             >
               <Button
-                variant={isActive ? "default" : "outline"}
+                variant={isActive ? 'default' : 'outline'}
                 size="sm"
-                className={`rounded-full border-border/60 px-4 text-xs font-medium transition-shadow ${isActive ? "shadow-md shadow-primary/20" : ""}`}
+                className={`rounded-full border-border/60 px-4 text-xs font-medium transition-shadow ${isActive ? 'shadow-md shadow-primary/20' : ''}`}
                 onClick={() => handleFilterClick(filter)}
                 aria-pressed={isActive}
               >
                 {filter}
               </Button>
             </motion.div>
-          )
+          );
         })}
       </ButtonGroup>
     </section>
-  )
+  );
 }

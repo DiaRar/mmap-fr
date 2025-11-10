@@ -1,9 +1,9 @@
-import { useCallback, useMemo, useState, type JSX } from "react"
-import { ArrowLeft, Sparkles } from "lucide-react"
-import { toast } from "sonner"
-import { useNavigate } from "react-router-dom"
+import { useCallback, useMemo, useState, type JSX } from 'react';
+import { ArrowLeft, Sparkles } from 'lucide-react';
+import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
-import { Button } from "@/components/ui/button"
+import { Button } from '@/components/ui/button';
 import {
   Field,
   FieldContent,
@@ -14,11 +14,11 @@ import {
   FieldSeparator,
   FieldSet,
   FieldTitle,
-} from "@/components/ui/field"
-import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
-import { Textarea } from "@/components/ui/textarea"
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group"
+} from '@/components/ui/field';
+import { Input } from '@/components/ui/input';
+import { Slider } from '@/components/ui/slider';
+import { Textarea } from '@/components/ui/textarea';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   Sheet,
   SheetContent,
@@ -27,114 +27,114 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"
+} from '@/components/ui/sheet';
 
 type SuggestMealFormState = {
-  mealName: string
-  restaurantName: string
-  location: string
-  cuisine: string
-  priceRange: number
-  dietaryTags: string[]
-  waitTime: number
-  notes: string
-}
+  mealName: string;
+  restaurantName: string;
+  location: string;
+  cuisine: string;
+  priceRange: number;
+  dietaryTags: string[];
+  waitTime: number;
+  notes: string;
+};
 
 const INITIAL_FORM: SuggestMealFormState = {
-  mealName: "",
-  restaurantName: "",
-  location: "",
-  cuisine: "",
+  mealName: '',
+  restaurantName: '',
+  location: '',
+  cuisine: '',
   priceRange: 2,
   dietaryTags: [],
   waitTime: 15,
-  notes: "",
-}
+  notes: '',
+};
 
 const PRICE_BANDS: Record<number, { label: string; helper: string }> = {
-  1: { label: "Budget-friendly", helper: "Great for everyday cravings" },
-  2: { label: "Casual treat", helper: "Typical dinner pricing" },
-  3: { label: "Special outing", helper: "Ideal for celebrations" },
-  4: { label: "Splurge", helper: "Premium dining experience" },
-}
+  1: { label: 'Budget-friendly', helper: 'Great for everyday cravings' },
+  2: { label: 'Casual treat', helper: 'Typical dinner pricing' },
+  3: { label: 'Special outing', helper: 'Ideal for celebrations' },
+  4: { label: 'Splurge', helper: 'Premium dining experience' },
+};
 
 const DIETARY_OPTIONS = [
-  "Vegan",
-  "Vegetarian",
-  "Gluten-free",
-  "Dairy-free",
-  "Halal",
-  "Nut-free",
-  "Low-carb",
-]
+  'Vegan',
+  'Vegetarian',
+  'Gluten-free',
+  'Dairy-free',
+  'Halal',
+  'Nut-free',
+  'Low-carb',
+];
 
 export function SuggestMealPage(): JSX.Element {
-  const navigate = useNavigate()
-  const [formState, setFormState] = useState<SuggestMealFormState>(INITIAL_FORM)
-  const [errors, setErrors] = useState<Partial<Record<keyof SuggestMealFormState, string>>>({})
-  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
+  const navigate = useNavigate();
+  const [formState, setFormState] = useState<SuggestMealFormState>(INITIAL_FORM);
+  const [errors, setErrors] = useState<Partial<Record<keyof SuggestMealFormState, string>>>({});
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   const handleBack = useCallback(() => {
-    if (typeof window !== "undefined" && window.history.state?.idx > 0) {
-      navigate(-1)
-      return
+    if (typeof window !== 'undefined' && window.history.state?.idx > 0) {
+      navigate(-1);
+      return;
     }
 
-    navigate("/", { replace: true })
-  }, [navigate])
+    navigate('/', { replace: true });
+  }, [navigate]);
 
-  const priceBand = useMemo(() => PRICE_BANDS[formState.priceRange], [formState.priceRange])
+  const priceBand = useMemo(() => PRICE_BANDS[formState.priceRange], [formState.priceRange]);
 
   const handleInputChange =
     (field: keyof SuggestMealFormState) =>
     (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const value = event.currentTarget.value
+      const value = event.currentTarget.value;
       setFormState((prev) => ({
         ...prev,
         [field]: value,
-      }))
-    }
+      }));
+    };
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault()
+    event.preventDefault();
 
-    const nextErrors: Partial<Record<keyof SuggestMealFormState, string>> = {}
+    const nextErrors: Partial<Record<keyof SuggestMealFormState, string>> = {};
 
     if (!formState.mealName.trim()) {
-      nextErrors.mealName = "Give the meal a memorable name."
+      nextErrors.mealName = 'Give the meal a memorable name.';
     }
 
     if (!formState.restaurantName.trim()) {
-      nextErrors.restaurantName = "Let us know where to find it."
+      nextErrors.restaurantName = 'Let us know where to find it.';
     }
 
     if (!formState.location.trim()) {
-      nextErrors.location = "Add a neighbourhood or landmark."
+      nextErrors.location = 'Add a neighbourhood or landmark.';
     }
 
     if (!formState.cuisine.trim()) {
-      nextErrors.cuisine = "Share the cuisine or flavour profile."
+      nextErrors.cuisine = 'Share the cuisine or flavour profile.';
     }
 
-    const hasErrors = Object.values(nextErrors).some(Boolean)
+    const hasErrors = Object.values(nextErrors).some(Boolean);
 
     if (hasErrors) {
-      setErrors(nextErrors)
-      toast.error("Almost there!", {
-        description: "Fill in the highlighted details before submitting.",
-      })
-      return
+      setErrors(nextErrors);
+      toast.error('Almost there!', {
+        description: 'Fill in the highlighted details before submitting.',
+      });
+      return;
     }
 
-    setErrors({})
+    setErrors({});
 
-    toast.success("Meal suggestion sent", {
+    toast.success('Meal suggestion sent', {
       description: `${formState.mealName} at ${formState.restaurantName} is on its way to the reviews team.`,
-    })
+    });
 
-    setFormState(INITIAL_FORM)
-    setIsPreviewOpen(false)
-  }
+    setFormState(INITIAL_FORM);
+    setIsPreviewOpen(false);
+  };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -173,19 +173,19 @@ export function SuggestMealPage(): JSX.Element {
               <Field>
                 <FieldLabel>
                   <FieldTitle>Meal name</FieldTitle>
-                  <FieldDescription>
-                    What should we call this crowd-pleaser?
-                  </FieldDescription>
+                  <FieldDescription>What should we call this crowd-pleaser?</FieldDescription>
                 </FieldLabel>
                 <FieldContent>
                   <Input
                     value={formState.mealName}
-                    onChange={handleInputChange("mealName")}
+                    onChange={handleInputChange('mealName')}
                     placeholder="Midnight truffle ramyeon"
                     aria-invalid={Boolean(errors.mealName)}
                     required
                   />
-                  <FieldError errors={errors.mealName ? [{ message: errors.mealName }] : undefined} />
+                  <FieldError
+                    errors={errors.mealName ? [{ message: errors.mealName }] : undefined}
+                  />
                 </FieldContent>
               </Field>
 
@@ -199,13 +199,15 @@ export function SuggestMealPage(): JSX.Element {
                 <FieldContent>
                   <Input
                     value={formState.restaurantName}
-                    onChange={handleInputChange("restaurantName")}
+                    onChange={handleInputChange('restaurantName')}
                     placeholder="Seollal Supper Club"
                     aria-invalid={Boolean(errors.restaurantName)}
                     required
                   />
                   <FieldError
-                    errors={errors.restaurantName ? [{ message: errors.restaurantName }] : undefined}
+                    errors={
+                      errors.restaurantName ? [{ message: errors.restaurantName }] : undefined
+                    }
                   />
                 </FieldContent>
               </Field>
@@ -213,17 +215,21 @@ export function SuggestMealPage(): JSX.Element {
               <Field>
                 <FieldLabel>
                   <FieldTitle>Neighbourhood</FieldTitle>
-                  <FieldDescription>Share a landmark or building to make it easy to find.</FieldDescription>
+                  <FieldDescription>
+                    Share a landmark or building to make it easy to find.
+                  </FieldDescription>
                 </FieldLabel>
                 <FieldContent>
                   <Input
                     value={formState.location}
-                    onChange={handleInputChange("location")}
+                    onChange={handleInputChange('location')}
                     placeholder="KAIST W8 rooftop, Daejeon"
                     aria-invalid={Boolean(errors.location)}
                     required
                   />
-                  <FieldError errors={errors.location ? [{ message: errors.location }] : undefined} />
+                  <FieldError
+                    errors={errors.location ? [{ message: errors.location }] : undefined}
+                  />
                 </FieldContent>
               </Field>
 
@@ -237,7 +243,7 @@ export function SuggestMealPage(): JSX.Element {
                 <FieldContent>
                   <Input
                     value={formState.cuisine}
-                    onChange={handleInputChange("cuisine")}
+                    onChange={handleInputChange('cuisine')}
                     placeholder="Modern Korean izakaya"
                     aria-invalid={Boolean(errors.cuisine)}
                     required
@@ -274,7 +280,7 @@ export function SuggestMealPage(): JSX.Element {
                   <div className="grid grid-cols-4 justify-items-center text-xs text-muted-foreground">
                     {Object.keys(PRICE_BANDS).map((band) => (
                       <span key={band} className="tabular-nums">
-                        {"$".repeat(Number(band))}
+                        {'$'.repeat(Number(band))}
                       </span>
                     ))}
                   </div>
@@ -351,7 +357,7 @@ export function SuggestMealPage(): JSX.Element {
                 <FieldContent>
                   <Textarea
                     value={formState.notes}
-                    onChange={handleInputChange("notes")}
+                    onChange={handleInputChange('notes')}
                     placeholder="Ask for the torch-charred sesame butter on the side – it sells out fast."
                     rows={4}
                   />
@@ -364,29 +370,25 @@ export function SuggestMealPage(): JSX.Element {
             <div className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">Ready to share?</h2>
               <p className="text-sm text-muted-foreground">
-                Preview your submission or fire it off right away. We&apos;ll surface the best meals in
-                the reviews feed.
+                Preview your submission or fire it off right away. We&apos;ll surface the best meals
+                in the reviews feed.
               </p>
             </div>
 
             <div className="flex flex-col gap-3">
               <Sheet open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
                 <SheetTrigger asChild>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="rounded-full border-dashed"
-                  >
+                  <Button type="button" variant="outline" className="rounded-full border-dashed">
                     Preview suggestion
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="bottom" className="rounded-t-[28px] px-6 pb-10 pt-6">
                   <SheetHeader className="text-left">
-                    <SheetTitle>{formState.mealName || "Untitled meal suggestion"}</SheetTitle>
+                    <SheetTitle>{formState.mealName || 'Untitled meal suggestion'}</SheetTitle>
                     <SheetDescription>
                       {formState.restaurantName
-                        ? `${formState.restaurantName} · ${formState.location || "location TBD"}`
-                        : "Add the restaurant details to complete the preview."}
+                        ? `${formState.restaurantName} · ${formState.location || 'location TBD'}`
+                        : 'Add the restaurant details to complete the preview.'}
                     </SheetDescription>
                   </SheetHeader>
 
@@ -396,7 +398,7 @@ export function SuggestMealPage(): JSX.Element {
                         Cuisine
                       </h3>
                       <p className="text-foreground">
-                        {formState.cuisine || "Add a cuisine so readers know what to expect."}
+                        {formState.cuisine || 'Add a cuisine so readers know what to expect.'}
                       </p>
                     </div>
                     <div>
@@ -412,8 +414,8 @@ export function SuggestMealPage(): JSX.Element {
                       </h3>
                       <p className="text-foreground">
                         {formState.dietaryTags.length > 0
-                          ? formState.dietaryTags.join(", ")
-                          : "Select any dietary-friendly notes."}
+                          ? formState.dietaryTags.join(', ')
+                          : 'Select any dietary-friendly notes.'}
                       </p>
                     </div>
                     <div>
@@ -423,7 +425,7 @@ export function SuggestMealPage(): JSX.Element {
                       <p className="text-foreground">
                         {formState.waitTime > 0
                           ? `${formState.waitTime} minute wait on average`
-                          : "Usually ready immediately"}
+                          : 'Usually ready immediately'}
                       </p>
                     </div>
                     <div>
@@ -431,7 +433,7 @@ export function SuggestMealPage(): JSX.Element {
                         Insider notes
                       </h3>
                       <p className="text-foreground">
-                        {formState.notes || "Share any sequencing tips or off-menu upgrades."}
+                        {formState.notes || 'Share any sequencing tips or off-menu upgrades.'}
                       </p>
                     </div>
                   </div>
@@ -456,5 +458,5 @@ export function SuggestMealPage(): JSX.Element {
         </form>
       </main>
     </div>
-  )
+  );
 }

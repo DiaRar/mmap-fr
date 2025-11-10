@@ -1,4 +1,4 @@
-import type { JSX, PropsWithChildren } from 'react'
+import type { JSX, PropsWithChildren } from 'react';
 
 /**
  * AppProviders is the single place to configure global context providers,
@@ -6,5 +6,5 @@ import type { JSX, PropsWithChildren } from 'react'
  * Add new providers here so routes remain clean and testable.
  */
 export function AppProviders({ children }: PropsWithChildren): JSX.Element {
-  return <>{children}</>
+  return <>{children}</>;
 }

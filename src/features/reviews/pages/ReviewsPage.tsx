@@ -1,22 +1,20 @@
-import { useMemo, useState, type JSX } from "react";
-import { Sparkles } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useMemo, useState, type JSX } from 'react';
+import { Sparkles } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import { BottomNav } from "@/features/navigation/components/BottomNav";
-import { Separator } from "@/components/ui/separator";
+import { BottomNav } from '@/features/navigation/components/BottomNav';
+import { Separator } from '@/components/ui/separator';
 
-import { useNearbyRestaurants } from "@/lib/data/restaurants";
-import { AddRestaurantCTA } from "../components/AddRestaurantCTA";
-import { RestaurantList } from "../components/RestaurantList";
-import { RestaurantSearch } from "../components/RestaurantSearch";
+import { useNearbyRestaurants } from '@/lib/data/restaurants';
+import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
+import { RestaurantList } from '../components/RestaurantList';
+import { RestaurantSearch } from '../components/RestaurantSearch';
 
 export function ReviewsPage(): JSX.Element {
   const navigate = useNavigate();
   const { restaurants } = useNearbyRestaurants();
-  const [searchTerm, setSearchTerm] = useState("");
-  const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>(
-    {}
-  );
+  const [searchTerm, setSearchTerm] = useState('');
+  const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>({});
 
   const filteredRestaurants = useMemo(() => {
     const needle = searchTerm.trim().toLowerCase();
@@ -29,7 +27,7 @@ export function ReviewsPage(): JSX.Element {
       const fields = [
         restaurant.name,
         restaurant.cuisine,
-        restaurant.tags.join(" "),
+        restaurant.tags.join(' '),
         restaurant.priceRange,
       ];
       return fields.some((field) => field.toLowerCase().includes(needle));
@@ -56,9 +54,7 @@ export function ReviewsPage(): JSX.Element {
             <div className="flex items-center gap-2 text-sm font-semibold text-primary">
               <Sparkles className="size-4" />
               <span>
-                {bookmarkedCount > 0
-                  ? `${bookmarkedCount} saved spots`
-                  : "Tailored nearby picks"}
+                {bookmarkedCount > 0 ? `${bookmarkedCount} saved spots` : 'Tailored nearby picks'}
               </span>
             </div>
             <div className="space-y-2">
@@ -66,15 +62,14 @@ export function ReviewsPage(): JSX.Element {
                 Where should we eat tonight?
               </h1>
               <p className="text-sm text-muted-foreground lg:text-base">
-                Browse curated places pulled from the community’s latest
-                reviews.
+                Browse curated places pulled from the community’s latest reviews.
               </p>
             </div>
             <RestaurantSearch value={searchTerm} onChange={setSearchTerm} />
           </header>
 
           <div className="hidden lg:block">
-            <AddRestaurantCTA onAddClick={() => navigate("/suggest")} />
+            <AddRestaurantCTA onAddClick={() => navigate('/suggest')} />
           </div>
 
           <div className="hidden lg:block">
@@ -92,14 +87,12 @@ export function ReviewsPage(): JSX.Element {
           </div>
           <Separator className="bg-border/60 lg:hidden" />
           <div className="lg:hidden">
-            <AddRestaurantCTA onAddClick={() => navigate("/suggest")} />
+            <AddRestaurantCTA onAddClick={() => navigate('/suggest')} />
           </div>
         </section>
       </div>
 
-      <footer
-        className="sticky bottom-0 px-4 py-3 lg:hidden"
-      >
+      <footer className="sticky bottom-0 px-4 py-3 lg:hidden">
         <div className="flex justify-center">
           <BottomNav />
         </div>

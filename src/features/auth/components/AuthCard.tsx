@@ -1,4 +1,4 @@
-import type { JSX, ReactNode } from "react";
+import type { JSX, ReactNode } from 'react';
 
 import {
   Card,
@@ -7,8 +7,8 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { cn } from "@/lib/utils";
+} from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type AuthCardProps = {
   title: string;
@@ -28,14 +28,12 @@ export function AuthCard({
   return (
     <Card
       className={cn(
-        "overflow-hidden border-border/60 shadow-lg shadow-primary/5 backdrop-blur-sm",
+        'overflow-hidden border-border/60 shadow-lg shadow-primary/5 backdrop-blur-sm',
         className
       )}
     >
       <CardHeader className="space-y-2 text-center">
-        <CardTitle className="text-2xl font-semibold tracking-tight">
-          {title}
-        </CardTitle>
+        <CardTitle className="text-2xl font-semibold tracking-tight">{title}</CardTitle>
         {description ? (
           <CardDescription className="text-balance text-sm text-muted-foreground">
             {description}

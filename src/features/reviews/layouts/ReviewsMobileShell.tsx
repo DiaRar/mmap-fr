@@ -1,14 +1,14 @@
-import { AnimatePresence, motion } from "motion/react"
-import type { JSX } from "react"
-import { useLocation, useOutlet } from "react-router-dom"
+import { AnimatePresence, motion } from 'motion/react';
+import type { JSX } from 'react';
+import { useLocation, useOutlet } from 'react-router-dom';
 
 /**
  * ReviewsMobileShell provides the shared chrome for the reviews feature.
  * Child routes render inside the shell via <Outlet /> to keep navigation cohesive.
  */
 export function ReviewsMobileShell(): JSX.Element {
-  const location = useLocation()
-  const outlet = useOutlet()
+  const location = useLocation();
+  const outlet = useOutlet();
 
   return (
     <div className="relative flex min-h-screen w-full justify-center bg-gradient-to-br from-background via-background/95 to-primary/10 px-1.5 py-3 sm:px-4 sm:py-5 lg:px-8 lg:py-8">
@@ -24,7 +24,7 @@ export function ReviewsMobileShell(): JSX.Element {
               initial={{ opacity: 0, y: 16, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -12, scale: 0.98 }}
-              transition={{ duration: 0.25, ease: "easeOut" }}
+              transition={{ duration: 0.25, ease: 'easeOut' }}
               className="flex w-full flex-1"
             >
               {outlet}
@@ -33,6 +33,5 @@ export function ReviewsMobileShell(): JSX.Element {
         </AnimatePresence>
       </div>
     </div>
-  )
+  );
 }
-

@@ -1,7 +1,7 @@
-export { ReviewsMobileShell } from "./layouts/ReviewsMobileShell"
-export { ReviewsPage } from "./pages/ReviewsPage"
-export { SuggestMealPage } from "./pages/SuggestMealPage"
-export { RestaurantCard } from "./components/RestaurantCard"
-export { RestaurantList } from "./components/RestaurantList"
-export { RestaurantSearch } from "./components/RestaurantSearch"
-export { AddRestaurantCTA } from "./components/AddRestaurantCTA"
+export { ReviewsMobileShell } from './layouts/ReviewsMobileShell';
+export { ReviewsPage } from './pages/ReviewsPage';
+export { SuggestMealPage } from './pages/SuggestMealPage';
+export { RestaurantCard } from './components/RestaurantCard';
+export { RestaurantList } from './components/RestaurantList';
+export { RestaurantSearch } from './components/RestaurantSearch';
+export { AddRestaurantCTA } from './components/AddRestaurantCTA';

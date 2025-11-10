@@ -1,4 +1,4 @@
-import { Github, Mail } from "lucide-react";
+import { Github, Mail } from 'lucide-react';
 import {
   type FormEvent,
   type PointerEvent as ReactPointerEvent,
@@ -7,7 +7,7 @@ import {
   useRef,
   useState,
   type JSX,
-} from "react";
+} from 'react';
 import {
   AnimatePresence,
   MotionConfig,
@@ -19,20 +19,15 @@ import {
   useSpring,
   useTransform,
   type Transition,
-} from "motion/react";
+} from 'motion/react';
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  AuthCard,
-  AuthDivider,
-  AuthFooterLink,
-  AuthLayout,
-} from "../components";
-import { cn } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { AuthCard, AuthDivider, AuthFooterLink, AuthLayout } from '../components';
+import { cn } from '@/lib/utils';
 
 export function RegisterPage(): JSX.Element {
   const [isLoading, setIsLoading] = useState(false);
@@ -59,19 +54,19 @@ export function RegisterPage(): JSX.Element {
   const [focusedField, setFocusedField] = useState<string | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined") {
+    if (typeof window === 'undefined') {
       return;
     }
 
-    const mediaQuery = window.matchMedia("(pointer: coarse) and (hover: none)");
+    const mediaQuery = window.matchMedia('(pointer: coarse) and (hover: none)');
     const handleChange = () => {
       setIsCoarsePointer(mediaQuery.matches);
     };
 
     handleChange();
-    mediaQuery.addEventListener("change", handleChange);
+    mediaQuery.addEventListener('change', handleChange);
 
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   useEffect(() => {
@@ -82,15 +77,13 @@ export function RegisterPage(): JSX.Element {
   }, [enableInteractiveTilt]);
 
   const cardShadow = useTransform([rotateX, rotateY], ([x, y]) => {
-    const nextX = typeof x === "number" ? x : 0;
-    const nextY = typeof y === "number" ? y : 0;
-    return `0px ${Math.max(14 - nextX, 8)}px ${
-      36 + Math.abs(nextY) * 2
-    }px rgba(15, 23, 42, 0.25)`;
+    const nextX = typeof x === 'number' ? x : 0;
+    const nextY = typeof y === 'number' ? y : 0;
+    return `0px ${Math.max(14 - nextX, 8)}px ${36 + Math.abs(nextY) * 2}px rgba(15, 23, 42, 0.25)`;
   });
   const glowBackground = useMotionTemplate`radial-gradient(120% 140% at ${glowX}% ${glowY}%, rgba(236, 72, 153, ${glowOpacity}), rgba(59, 130, 246, 0.18), transparent 70%)`;
   const staticGlowBackground =
-    "radial-gradient(120% 140% at 50% 38%, rgba(236, 72, 153, 0.45), rgba(59, 130, 246, 0.16), transparent 70%)";
+    'radial-gradient(120% 140% at 50% 38%, rgba(236, 72, 153, 0.45), rgba(59, 130, 246, 0.16), transparent 70%)';
 
   const ambientInitial = {
     opacity: 0,
@@ -102,11 +95,11 @@ export function RegisterPage(): JSX.Element {
       ? { opacity: [0.5, 0.68, 0.5], scale: [0.94, 1.02, 0.94] }
       : { opacity: 0.6, scale: 1 };
   const ambientTransition: Transition = enableInteractiveTilt
-    ? { duration: 0.85, delay: 0.18, ease: "easeOut" }
+    ? { duration: 0.85, delay: 0.18, ease: 'easeOut' }
     : enableAmbientLoop
-      ? { duration: 9.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-      : { duration: 0.65, ease: "easeOut" };
-  const ambientBlurClass = enableInteractiveTilt ? "blur-3xl" : "blur-2xl sm:blur-3xl";
+      ? { duration: 9.5, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+      : { duration: 0.65, ease: 'easeOut' };
+  const ambientBlurClass = enableInteractiveTilt ? 'blur-3xl' : 'blur-2xl sm:blur-3xl';
 
   const cardInitial = {
     opacity: 0,
@@ -119,10 +112,10 @@ export function RegisterPage(): JSX.Element {
       ? { opacity: 1, y: [0, -7, 0], scale: [1, 1.012, 1] }
       : { opacity: 1, y: 0, scale: 1 };
   const cardTransition: Transition = enableInteractiveTilt
-    ? { duration: 0.65, ease: "easeOut" }
+    ? { duration: 0.65, ease: 'easeOut' }
     : enableAmbientLoop
-      ? { duration: 10.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
-      : { duration: 0.65, ease: "easeOut" };
+      ? { duration: 10.5, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
+      : { duration: 0.65, ease: 'easeOut' };
   const cardMotionStyle = enableInteractiveTilt
     ? { rotateX, rotateY, transformPerspective: 1200, boxShadow: cardShadow }
     : undefined;
@@ -139,7 +132,7 @@ export function RegisterPage(): JSX.Element {
   const glowTransition: Transition | undefined = enableInteractiveTilt
     ? undefined
     : enableAmbientLoop
-      ? { duration: 10.5, repeat: Infinity, repeatType: "mirror", ease: "easeInOut" }
+      ? { duration: 10.5, repeat: Infinity, repeatType: 'mirror', ease: 'easeInOut' }
       : undefined;
   const glowStyle = enableInteractiveTilt
     ? { background: glowBackground }
@@ -147,16 +140,15 @@ export function RegisterPage(): JSX.Element {
   const showMobileAura = enableAmbientLoop;
 
   const fieldBaseClasses =
-    "space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition-colors duration-200";
+    'space-y-2 rounded-xl border border-border/50 bg-background/60 p-4 shadow-inner shadow-primary/5 backdrop-blur-sm transition-colors duration-200';
   const fieldFocusClasses: Record<string, string> = {
-    "full-name":
-      "border-rose-400/60 shadow-[0_0_0_1px_rgba(244,114,182,0.35)] shadow-rose-400/10",
-    "register-email":
-      "border-sky-400/55 shadow-[0_0_0_1px_rgba(56,189,248,0.35)] shadow-sky-400/10",
-    "register-password":
-      "border-indigo-400/55 shadow-[0_0_0_1px_rgba(99,102,241,0.3)] shadow-indigo-400/10",
-    "confirm-password":
-      "border-indigo-400/55 shadow-[0_0_0_1px_rgba(99,102,241,0.3)] shadow-indigo-400/10",
+    'full-name': 'border-rose-400/60 shadow-[0_0_0_1px_rgba(244,114,182,0.35)] shadow-rose-400/10',
+    'register-email':
+      'border-sky-400/55 shadow-[0_0_0_1px_rgba(56,189,248,0.35)] shadow-sky-400/10',
+    'register-password':
+      'border-indigo-400/55 shadow-[0_0_0_1px_rgba(99,102,241,0.3)] shadow-indigo-400/10',
+    'confirm-password':
+      'border-indigo-400/55 shadow-[0_0_0_1px_rgba(99,102,241,0.3)] shadow-indigo-400/10',
   };
 
   const handleFieldFocus = (fieldId: string) => {
@@ -211,13 +203,13 @@ export function RegisterPage(): JSX.Element {
   const socialProviders = useMemo(
     () => [
       {
-        id: "github",
-        label: "GitHub",
+        id: 'github',
+        label: 'GitHub',
         icon: Github,
       },
       {
-        id: "email-link",
-        label: "Email link",
+        id: 'email-link',
+        label: 'Email link',
         icon: Mail,
       },
     ],
@@ -238,7 +230,7 @@ export function RegisterPage(): JSX.Element {
 
   return (
     <AuthLayout>
-      <MotionConfig transition={{ type: "spring", stiffness: 170, damping: 18 }}>
+      <MotionConfig transition={{ type: 'spring', stiffness: 170, damping: 18 }}>
         <div className="relative">
           <motion.div
             aria-hidden
@@ -248,7 +240,7 @@ export function RegisterPage(): JSX.Element {
             transition={ambientTransition}
             style={{
               background:
-                "radial-gradient(90% 95% at 15% 12%, rgba(236, 72, 153, 0.35), transparent 60%), radial-gradient(100% 110% at 85% 90%, rgba(59, 130, 246, 0.3), transparent 70%)",
+                'radial-gradient(90% 95% at 15% 12%, rgba(236, 72, 153, 0.35), transparent 60%), radial-gradient(100% 110% at 85% 90%, rgba(59, 130, 246, 0.3), transparent 70%)',
             }}
           />
 
@@ -303,7 +295,7 @@ export function RegisterPage(): JSX.Element {
                 initial={{ opacity: 0, scale: 0.7, rotate: 12 }}
                 animate={{ opacity: 0.55, scale: 1, rotate: 0 }}
                 transition={{ delay: 0.25, duration: 0.6 }}
-                style={{ backdropFilter: "blur(6px)" }}
+                style={{ backdropFilter: 'blur(6px)' }}
               />
 
               <motion.form
@@ -321,162 +313,152 @@ export function RegisterPage(): JSX.Element {
                 <motion.div
                   className={cn(
                     fieldBaseClasses,
-                    focusedField === "full-name" && fieldFocusClasses["full-name"]
+                    focusedField === 'full-name' && fieldFocusClasses['full-name']
                   )}
                   variants={{
                     hidden: { opacity: 0, y: 26 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: "rgba(236, 72, 153, 0.45)" }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(236, 72, 153, 0.45)' } : undefined
                   }
                 >
-            <Label htmlFor="full-name">Full name</Label>
-            <Input
-              id="full-name"
-              name="fullName"
-              type="text"
-              autoComplete="name"
-              placeholder="Jamie Doe"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="full-name">Full name</Label>
+                  <Input
+                    id="full-name"
+                    name="fullName"
+                    type="text"
+                    autoComplete="name"
+                    placeholder="Jamie Doe"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                    onFocus={() => handleFieldFocus("full-name")}
-                    onBlur={() => handleFieldBlur("full-name")}
-            />
+                    onFocus={() => handleFieldFocus('full-name')}
+                    onBlur={() => handleFieldBlur('full-name')}
+                  />
                 </motion.div>
 
                 <motion.div
                   className={cn(
                     fieldBaseClasses,
-                    focusedField === "register-email" && fieldFocusClasses["register-email"]
+                    focusedField === 'register-email' && fieldFocusClasses['register-email']
                   )}
                   variants={{
                     hidden: { opacity: 0, y: 26 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: "rgba(37, 99, 235, 0.4)" }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(37, 99, 235, 0.4)' } : undefined
                   }
                 >
-            <Label htmlFor="register-email">Email</Label>
-            <Input
-              id="register-email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              placeholder="you@example.com"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="register-email">Email</Label>
+                  <Input
+                    id="register-email"
+                    name="email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="you@example.com"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                    onFocus={() => handleFieldFocus("register-email")}
-                    onBlur={() => handleFieldBlur("register-email")}
-            />
+                    onFocus={() => handleFieldFocus('register-email')}
+                    onBlur={() => handleFieldBlur('register-email')}
+                  />
                 </motion.div>
 
                 <motion.div
                   className={cn(
                     fieldBaseClasses,
-                    focusedField === "register-password" &&
-                      fieldFocusClasses["register-password"]
+                    focusedField === 'register-password' && fieldFocusClasses['register-password']
                   )}
                   variants={{
                     hidden: { opacity: 0, y: 26 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: "rgba(59, 130, 246, 0.4)" }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(59, 130, 246, 0.4)' } : undefined
                   }
                 >
-            <Label htmlFor="register-password">Password</Label>
-            <Input
-              id="register-password"
-              name="password"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Create a password"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="register-password">Password</Label>
+                  <Input
+                    id="register-password"
+                    name="password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Create a password"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                    onFocus={() => handleFieldFocus("register-password")}
-                    onBlur={() => handleFieldBlur("register-password")}
-            />
+                    onFocus={() => handleFieldFocus('register-password')}
+                    onBlur={() => handleFieldBlur('register-password')}
+                  />
                 </motion.div>
 
                 <motion.div
                   className={cn(
                     fieldBaseClasses,
-                    focusedField === "confirm-password" &&
-                      fieldFocusClasses["confirm-password"]
+                    focusedField === 'confirm-password' && fieldFocusClasses['confirm-password']
                   )}
                   variants={{
                     hidden: { opacity: 0, y: 26 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={
-                    enableInteractiveTilt
-                      ? { borderColor: "rgba(59, 130, 246, 0.4)" }
-                      : undefined
+                    enableInteractiveTilt ? { borderColor: 'rgba(59, 130, 246, 0.4)' } : undefined
                   }
                 >
-            <Label htmlFor="confirm-password">Confirm password</Label>
-            <Input
-              id="confirm-password"
-              name="confirmPassword"
-              type="password"
-              autoComplete="new-password"
-              placeholder="Repeat your password"
-              required
-              disabled={isLoading}
+                  <Label htmlFor="confirm-password">Confirm password</Label>
+                  <Input
+                    id="confirm-password"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="Repeat your password"
+                    required
+                    disabled={isLoading}
                     className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
-                    onFocus={() => handleFieldFocus("confirm-password")}
-                    onBlur={() => handleFieldBlur("confirm-password")}
-            />
+                    onFocus={() => handleFieldFocus('confirm-password')}
+                    onBlur={() => handleFieldBlur('confirm-password')}
+                  />
                 </motion.div>
 
                 <motion.label
-            htmlFor="terms"
+                  htmlFor="terms"
                   className="flex cursor-pointer items-start gap-3 rounded-xl border border-transparent px-3 py-3 text-sm text-muted-foreground transition"
                   variants={{
                     hidden: { opacity: 0, y: 22 },
                     visible: { opacity: 1, y: 0 },
                   }}
                   whileHover={{
-                    borderColor: "rgba(236, 72, 153, 0.4)",
-                    backgroundColor: "rgba(236, 72, 153, 0.08)",
+                    borderColor: 'rgba(236, 72, 153, 0.4)',
+                    backgroundColor: 'rgba(236, 72, 153, 0.08)',
                   }}
                   whileTap={{ scale: 0.99 }}
-          >
-            <Checkbox id="terms" className="mt-0.5" disabled={isLoading} />
-            <span>
-              I agree to the{" "}
+                >
+                  <Checkbox id="terms" className="mt-0.5" disabled={isLoading} />
+                  <span>
+                    I agree to the{' '}
                     <motion.button
-                type="button"
+                      type="button"
                       className="font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
-                disabled={isLoading}
+                      disabled={isLoading}
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.97 }}
-              >
-                Terms of Service
-                    </motion.button>{" "}
-              and{" "}
+                    >
+                      Terms of Service
+                    </motion.button>{' '}
+                    and{' '}
                     <motion.button
-                type="button"
+                      type="button"
                       className="font-medium text-primary transition-colors hover:text-primary/80 disabled:pointer-events-none disabled:opacity-50"
-                disabled={isLoading}
+                      disabled={isLoading}
                       whileHover={{ y: -1 }}
                       whileTap={{ scale: 0.97 }}
-              >
-                Privacy Policy
+                    >
+                      Privacy Policy
                     </motion.button>
-              .
-            </span>
+                    .
+                  </span>
                 </motion.label>
 
                 <motion.div
@@ -492,10 +474,10 @@ export function RegisterPage(): JSX.Element {
                       disabled={isLoading}
                       whileHover={{ scale: isLoading ? 1 : 1.01 }}
                       whileTap={{ scale: isLoading ? 1 : 0.98 }}
-                      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+                      transition={{ type: 'spring', stiffness: 260, damping: 20 }}
                     >
                       <AnimatePresence mode="wait" initial={false}>
-            {isLoading ? (
+                        {isLoading ? (
                           <motion.span
                             key="loading"
                             className="flex items-center justify-center gap-2"
@@ -509,11 +491,11 @@ export function RegisterPage(): JSX.Element {
                               animate={{ rotate: 360 }}
                               transition={{
                                 repeat: Infinity,
-                                ease: "linear",
+                                ease: 'linear',
                                 duration: 1,
                               }}
                             >
-                <Spinner className="size-4" />
+                              <Spinner className="size-4" />
                             </motion.span>
                             <motion.span
                               initial={{ opacity: 0 }}
@@ -523,7 +505,7 @@ export function RegisterPage(): JSX.Element {
                               Creating account…
                             </motion.span>
                           </motion.span>
-            ) : (
+                        ) : (
                           <motion.span
                             key="default"
                             initial={{ opacity: 0, y: -6 }}
@@ -533,10 +515,10 @@ export function RegisterPage(): JSX.Element {
                           >
                             Create account
                           </motion.span>
-            )}
+                        )}
                       </AnimatePresence>
                     </motion.button>
-          </Button>
+                  </Button>
                 </motion.div>
               </motion.form>
 
@@ -558,7 +540,7 @@ export function RegisterPage(): JSX.Element {
                     visible: { opacity: 1, y: 0 },
                   }}
                 >
-          <AuthDivider label="or sign up with" />
+                  <AuthDivider label="or sign up with" />
                 </motion.div>
                 <motion.div
                   className="grid gap-3 sm:grid-cols-2"
@@ -589,7 +571,7 @@ export function RegisterPage(): JSX.Element {
                             scale: 1,
                             transition: {
                               delay: index * 0.025,
-                              type: "spring",
+                              type: 'spring',
                               stiffness: 240,
                               damping: 20,
                             },
@@ -599,9 +581,7 @@ export function RegisterPage(): JSX.Element {
                         whileTap={{ scale: 0.97 }}
                       >
                         <provider.icon className="size-4" />
-                        <span className="text-sm font-medium">
-                          {provider.label}
-                        </span>
+                        <span className="text-sm font-medium">{provider.label}</span>
                       </motion.button>
                     </Button>
                   ))}

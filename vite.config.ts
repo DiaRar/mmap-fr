@@ -1,7 +1,7 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react-swc'
-import { fileURLToPath, URL } from 'node:url'
-import { visualizer } from 'rollup-plugin-visualizer'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react-swc';
+import { fileURLToPath, URL } from 'node:url';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -31,4 +31,4 @@ export default defineConfig({
     globals: true,
     css: true,
   },
-})
+});

@@ -1,4 +1,4 @@
-import { Bookmark, Clock, MapPin, Star } from "lucide-react"
+import { Bookmark, Clock, MapPin, Star } from 'lucide-react';
 
 import {
   Card,
@@ -7,18 +7,18 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
+} from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
 
-import type { NearbyRestaurant } from "../types"
-import type { JSX } from "react"
+import type { NearbyRestaurant } from '../types';
+import type { JSX } from 'react';
 
 export interface RestaurantCardProps {
-  restaurant: NearbyRestaurant
-  onBookmark?: (restaurantId: string) => void
-  isBookmarked?: boolean
+  restaurant: NearbyRestaurant;
+  onBookmark?: (restaurantId: string) => void;
+  isBookmarked?: boolean;
 }
 
 export function RestaurantCard({
@@ -27,8 +27,8 @@ export function RestaurantCard({
   isBookmarked = false,
 }: RestaurantCardProps): JSX.Element {
   const handleBookmark = () => {
-    onBookmark?.(restaurant.id)
-  }
+    onBookmark?.(restaurant.id);
+  };
 
   return (
     <Card className="group overflow-hidden rounded-3xl border border-border/50 bg-white/90 shadow-md shadow-primary/5 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-within:-translate-y-0.5 focus-within:shadow-xl">
@@ -61,9 +61,9 @@ export function RestaurantCard({
           variant="secondary"
           size="icon"
           className="absolute right-3 top-3 size-9 rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary/40"
-          aria-label={`${isBookmarked ? "Remove bookmark for" : "Bookmark"} ${restaurant.name}`}
+          aria-label={`${isBookmarked ? 'Remove bookmark for' : 'Bookmark'} ${restaurant.name}`}
         >
-          <Bookmark className="size-4" fill={isBookmarked ? "currentColor" : "none"} />
+          <Bookmark className="size-4" fill={isBookmarked ? 'currentColor' : 'none'} />
         </Button>
       </div>
 
@@ -79,7 +79,8 @@ export function RestaurantCard({
           </Badge>
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()} reviews
+          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()}{' '}
+          reviews
         </CardDescription>
       </CardHeader>
 
@@ -121,5 +122,5 @@ export function RestaurantCard({
         </Button>
       </CardFooter>
     </Card>
-  )
+  );
 }

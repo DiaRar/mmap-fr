@@ -1,6 +1,6 @@
-import type { JSX } from "react";
+import type { JSX } from 'react';
 
-import { cn } from "@/lib/utils";
+import { cn } from '@/lib/utils';
 
 type AuthDividerProps = {
   label?: string;
@@ -8,13 +8,13 @@ type AuthDividerProps = {
 };
 
 export function AuthDivider({
-  label = "or continue with",
+  label = 'or continue with',
   className,
 }: AuthDividerProps): JSX.Element {
   return (
     <div
       className={cn(
-        "flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground",
+        'flex items-center gap-3 text-xs uppercase tracking-wide text-muted-foreground',
         className
       )}
     >
