@@ -1,5 +1,5 @@
 import { useCallback, useState, type JSX } from "react"
-import { motion } from "framer-motion"
+import { motion } from "motion/react"
 import { Filter, MapPin, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
