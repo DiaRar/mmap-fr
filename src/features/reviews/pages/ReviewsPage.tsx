@@ -1,5 +1,6 @@
 import { useMemo, useState, type JSX } from "react";
 import { Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 import { BottomNav } from "@/features/navigation/components/BottomNav";
 import { Separator } from "@/components/ui/separator";
@@ -10,6 +11,7 @@ import { RestaurantList } from "../components/RestaurantList";
 import { RestaurantSearch } from "../components/RestaurantSearch";
 
 export function ReviewsPage(): JSX.Element {
+  const navigate = useNavigate();
   const { restaurants } = useNearbyRestaurants();
   const [searchTerm, setSearchTerm] = useState("");
   const [bookmarkedIds, setBookmarkedIds] = useState<Record<string, boolean>>(
@@ -40,9 +42,6 @@ export function ReviewsPage(): JSX.Element {
       [restaurantId]: !prev[restaurantId],
     }));
   };
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
 
   const bookmarkedCount = useMemo(
     () => Object.values(bookmarkedIds).filter(Boolean).length,
@@ -75,7 +74,7 @@ export function ReviewsPage(): JSX.Element {
           </header>
 
           <div className="hidden lg:block">
-            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
+            <AddRestaurantCTA onAddClick={() => navigate("/suggest")} />
           </div>
 
           <div className="hidden lg:block">
@@ -93,7 +92,7 @@ export function ReviewsPage(): JSX.Element {
           </div>
           <Separator className="bg-border/60 lg:hidden" />
           <div className="lg:hidden">
-            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
+            <AddRestaurantCTA onAddClick={() => navigate("/suggest")} />
           </div>
         </section>
       </div>

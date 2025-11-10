@@ -1,8 +1,11 @@
-import { useMemo, type JSX } from "react"
+import { useCallback, useState, type JSX } from "react"
+import { motion } from "framer-motion"
 import { Filter, MapPin, Search } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { ButtonGroup } from "@/components/ui/button-group"
 
 export interface RestaurantSearchProps {
   value: string
@@ -17,17 +20,32 @@ export function RestaurantSearch({
   onChange,
   onFilterClick,
 }: RestaurantSearchProps): JSX.Element {
-  const hasSearchValue = useMemo(() => value.trim().length > 0, [value])
+  const [activeFilters, setActiveFilters] = useState<string[]>([])
+
+  const handleFilterClick = useCallback((filter: string) => {
+    setActiveFilters((current) => {
+      const isActive = current.includes(filter)
+
+      if (isActive) {
+        return current.filter((item) => item !== filter)
+      }
+
+      return [...current, filter]
+    })
+  }, [])
 
   return (
     <section className="space-y-4">
       <div className="rounded-3xl bg-white/60 p-4 shadow-sm backdrop-blur">
         <div className="flex items-center justify-between gap-3 pb-3">
-          <div>
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <div className="space-y-1">
+            <Badge
+              variant="outline"
+              className="w-fit rounded-full border-border/70 bg-muted/40 px-3 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground"
+            >
               Current Location
-            </p>
-            <div className="flex items-center gap-1 text-sm font-semibold text-foreground">
+            </Badge>
+            <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
               <MapPin className="size-4 text-primary" />
               <span>KAIST W8, 3rd floor, Daejeon</span>
             </div>
@@ -54,23 +72,30 @@ export function RestaurantSearch({
         </div>
       </div>
 
-      <div
-        className="flex items-center gap-2 overflow-x-auto pb-1"
-        data-horizontal-scroll
-      >
+      <ButtonGroup className="mx-auto flex max-w-full flex-wrap justify-center gap-2" data-horizontal-scroll>
         {trendingFilters.map((filter) => {
-          const isActive = hasSearchValue && value.toLowerCase().includes(filter.toLowerCase())
+          const isActive = activeFilters.includes(filter)
           return (
-            <Button
+            <motion.div
               key={filter}
-              variant={isActive ? "default" : "outline"}
-              className="rounded-full border-border/60 bg-white/80 px-4 py-2 text-xs font-medium"
+              layout
+              whileHover={{ y: -2 }}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: "spring", stiffness: 350, damping: 18 }}
             >
-              {filter}
-            </Button>
+              <Button
+                variant={isActive ? "default" : "outline"}
+                size="sm"
+                className={`rounded-full border-border/60 px-4 text-xs font-medium transition-shadow ${isActive ? "shadow-md shadow-primary/20" : ""}`}
+                onClick={() => handleFilterClick(filter)}
+                aria-pressed={isActive}
+              >
+                {filter}
+              </Button>
+            </motion.div>
           )
         })}
-      </div>
+      </ButtonGroup>
     </section>
   )
 }

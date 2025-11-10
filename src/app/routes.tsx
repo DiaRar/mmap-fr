@@ -1,14 +1,19 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom'
-import { ReviewsMobileShell, ReviewsPage } from '@/features/reviews'
-import type { JSX } from 'react'
+import { createBrowserRouter, RouterProvider } from "react-router-dom"
+import { ReviewsMobileShell, ReviewsPage, SuggestMealPage } from "@/features/reviews"
+import type { JSX } from "react"
 
 const router = createBrowserRouter([
   {
+    path: "/",
     element: <ReviewsMobileShell />,
     children: [
       {
-        path: '/',
+        index: true,
         element: <ReviewsPage />,
+      },
+      {
+        path: "suggest",
+        element: <SuggestMealPage />,
       },
     ],
   },

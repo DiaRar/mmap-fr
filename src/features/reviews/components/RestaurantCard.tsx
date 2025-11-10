@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 
 import type { NearbyRestaurant } from "../types"
@@ -41,37 +42,44 @@ export function RestaurantCard({
         <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute left-3 top-3 flex gap-2">
           {restaurant.isNew ? (
-            <span className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
+            <Badge className="rounded-full bg-primary px-3 py-1 text-xs font-semibold text-primary-foreground shadow">
               New
-            </span>
+            </Badge>
           ) : null}
           {restaurant.isPopular ? (
-            <span className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground shadow">
+            <Badge
+              variant="secondary"
+              className="rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-foreground shadow"
+            >
               Popular
-            </span>
+            </Badge>
           ) : null}
         </div>
-        <button
+        <Button
           type="button"
           onClick={handleBookmark}
-          className="absolute right-3 top-3 inline-flex size-9 items-center justify-center rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          variant="secondary"
+          size="icon"
+          className="absolute right-3 top-3 size-9 rounded-full bg-white/85 text-primary shadow transition hover:bg-primary hover:text-primary-foreground focus-visible:ring-primary/40"
           aria-label={`${isBookmarked ? "Remove bookmark for" : "Bookmark"} ${restaurant.name}`}
         >
           <Bookmark className="size-4" fill={isBookmarked ? "currentColor" : "none"} />
-        </button>
+        </Button>
       </div>
 
       <CardHeader className="space-y-1 px-5 pb-2 sm:px-6">
         <CardTitle className="flex items-start justify-between text-lg tracking-tight text-foreground">
           <span className="max-w-[70%] truncate font-semibold">{restaurant.name}</span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-1 text-xs font-semibold text-primary">
+          <Badge
+            variant="outline"
+            className="inline-flex items-center gap-1 rounded-full border-primary/20 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
+          >
             <Star className="size-3.5 fill-current" />
             {restaurant.rating.toFixed(1)}
-          </span>
+          </Badge>
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()}{" "}
-          reviews
+          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()} reviews
         </CardDescription>
       </CardHeader>
 
@@ -89,12 +97,13 @@ export function RestaurantCard({
         </div>
         <div className="flex flex-wrap gap-2">
           {restaurant.tags.map((tag) => (
-            <span
+            <Badge
               key={tag}
-              className="rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+              variant="outline"
+              className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
             >
               {tag}
-            </span>
+            </Badge>
           ))}
         </div>
       </CardContent>
@@ -103,7 +112,11 @@ export function RestaurantCard({
         <div className="text-sm text-muted-foreground">
           <p>“Everything here feels curated with care.”</p>
         </div>
-        <Button variant="secondary" size="sm" className="rounded-full px-4 transition-transform duration-300 group-hover:translate-x-0.5">
+        <Button
+          variant="secondary"
+          size="sm"
+          className="rounded-full px-4 transition-transform duration-300 group-hover:translate-x-0.5"
+        >
           View
         </Button>
       </CardFooter>
