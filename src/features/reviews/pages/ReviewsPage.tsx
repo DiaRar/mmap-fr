@@ -8,7 +8,6 @@ import { useNearbyRestaurants } from "@/lib/data/restaurants";
 import { AddRestaurantCTA } from "../components/AddRestaurantCTA";
 import { RestaurantList } from "../components/RestaurantList";
 import { RestaurantSearch } from "../components/RestaurantSearch";
-import { SuggestRestaurantDrawer } from "../components/SuggestRestaurantDrawer";
 
 export function ReviewsPage(): JSX.Element {
   const { restaurants } = useNearbyRestaurants();
@@ -42,6 +41,7 @@ export function ReviewsPage(): JSX.Element {
     }));
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [isSuggestOpen, setIsSuggestOpen] = useState(false);
 
   const bookmarkedCount = useMemo(
@@ -105,8 +105,6 @@ export function ReviewsPage(): JSX.Element {
           <BottomNav />
         </div>
       </footer>
-
-      <SuggestRestaurantDrawer open={isSuggestOpen} onOpenChange={setIsSuggestOpen} />
     </div>
   );
 }
