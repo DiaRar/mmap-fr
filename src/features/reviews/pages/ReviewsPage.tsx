@@ -41,9 +41,6 @@ export function ReviewsPage(): JSX.Element {
     }));
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
-
   const bookmarkedCount = useMemo(
     () => Object.values(bookmarkedIds).filter(Boolean).length,
     [bookmarkedIds]
@@ -75,7 +72,7 @@ export function ReviewsPage(): JSX.Element {
           </header>
 
           <div className="hidden lg:block">
-            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
+            <AddRestaurantCTA onAddClick={() => {}} />
           </div>
 
           <div className="hidden lg:block">
@@ -93,7 +90,7 @@ export function ReviewsPage(): JSX.Element {
           </div>
           <Separator className="bg-border/60 lg:hidden" />
           <div className="lg:hidden">
-            <AddRestaurantCTA onAddClick={() => setIsSuggestOpen(true)} />
+            <AddRestaurantCTA onAddClick={() => {}} />
           </div>
         </section>
       </div>
