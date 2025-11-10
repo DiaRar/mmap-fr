@@ -142,7 +142,7 @@ export function SuggestMealPage(): JSX.Element {
         <Button
           variant="default"
           size="icon"
-          className="border border-border/40 shadow-sm backdrop-blur-sm lg:size-11"
+          className="border border-border/40 shadow-sm backdrop-blur-sm"
           onClick={handleBack}
           type="button"
           aria-label="Back to reviews"
