@@ -21,13 +21,8 @@ export function AddRestaurantCTA({ onAddClick }: AddRestaurantCTAProps): JSX.Ele
         <PlusCircle className="size-6 text-primary" aria-hidden="true" />
       </CardHeader>
       <CardContent>
-        <Button
-          className="rounded-full px-4"
-          variant="default"
-          onClick={onAddClick}
-          aria-label="Add a restaurant"
-        >
-          Suggest a restaurant
+        <Button className="rounded-full px-4" variant="default" onClick={onAddClick}>
+          Start a review
         </Button>
       </CardContent>
     </Card>

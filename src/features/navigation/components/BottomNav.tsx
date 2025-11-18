@@ -1,15 +1,14 @@
-import { Compass, Home, Map, UserRound } from 'lucide-react';
+import { Home, Map, PencilLine, Sparkles } from 'lucide-react';
 import type { JSX } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { label: 'Reviews', icon: Home, to: '/' },
-  // { label: "Suggest", icon: Sparkles, to: "/suggest" },
-  { label: 'Discover', icon: Compass },
-  { label: 'Map', icon: Map },
-  { label: 'Profile', icon: UserRound },
+  { label: 'Feed', icon: Home, to: '/' },
+  { label: 'Map', icon: Map, to: '/map' },
+  { label: 'Review', icon: PencilLine, to: '/reviews/new' },
+  { label: 'For you', icon: Sparkles, to: '/recommendations' },
 ];
 
 export function BottomNav(): JSX.Element {
@@ -22,7 +21,11 @@ export function BottomNav(): JSX.Element {
       className="flex w-full max-w-xl items-center justify-between gap-1 rounded-full border border-border/60 bg-white/85 px-2 py-2 shadow backdrop-blur-sm sm:gap-2 sm:px-3"
     >
       {navItems.map(({ label, icon: Icon, to }) => {
-        const isActive = to ? location.pathname === to : false;
+        const isActive = to
+          ? to === '/'
+            ? location.pathname === '/'
+            : location.pathname.startsWith(to)
+          : false;
 
         return (
           <button

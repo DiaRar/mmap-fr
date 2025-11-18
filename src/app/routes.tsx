@@ -15,21 +15,33 @@ const RegisterPage = lazy(() =>
   }))
 );
 
-const ReviewsMobileShell = lazy(() =>
-  import('@/features/reviews/layouts/ReviewsMobileShell').then((module) => ({
-    default: module.ReviewsMobileShell,
+const DashboardShell = lazy(() =>
+  import('@/features/dashboard/layouts/DashboardShell').then((module) => ({
+    default: module.DashboardShell,
   }))
 );
 
-const ReviewsPage = lazy(() =>
-  import('@/features/reviews/pages/ReviewsPage').then((module) => ({
-    default: module.ReviewsPage,
+const FeedPage = lazy(() =>
+  import('@/features/dashboard/feed/pages/FeedPage').then((module) => ({
+    default: module.FeedPage,
   }))
 );
 
-const SuggestMealPage = lazy(() =>
-  import('@/features/reviews/pages/SuggestMealPage').then((module) => ({
-    default: module.SuggestMealPage,
+const MapPage = lazy(() =>
+  import('@/features/dashboard/map/pages/MapPage').then((module) => ({
+    default: module.MapPage,
+  }))
+);
+
+const RecommendationsPage = lazy(() =>
+  import('@/features/dashboard/recommendations/pages/RecommendationsPage').then((module) => ({
+    default: module.RecommendationsPage,
+  }))
+);
+
+const ReviewFormPage = lazy(() =>
+  import('@/features/dashboard/submission/pages/ReviewFormPage').then((module) => ({
+    default: module.ReviewFormPage,
   }))
 );
 
@@ -46,7 +58,7 @@ const router = createBrowserRouter([
     path: '/',
     element: (
       <Suspense fallback={<RouteSpinner />}>
-        <ReviewsMobileShell />
+        <DashboardShell />
       </Suspense>
     ),
     children: [
@@ -54,15 +66,31 @@ const router = createBrowserRouter([
         index: true,
         element: (
           <Suspense fallback={<RouteSpinner />}>
-            <ReviewsPage />
+            <FeedPage />
           </Suspense>
         ),
       },
       {
-        path: 'suggest',
+        path: 'map',
         element: (
           <Suspense fallback={<RouteSpinner />}>
-            <SuggestMealPage />
+            <MapPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'recommendations',
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <RecommendationsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'reviews/new',
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <ReviewFormPage />
           </Suspense>
         ),
       },

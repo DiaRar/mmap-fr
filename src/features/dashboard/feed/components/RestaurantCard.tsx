@@ -1,4 +1,5 @@
 import { Bookmark, Clock, MapPin, Star } from 'lucide-react';
+import type { JSX } from 'react';
 
 import {
   Card,
@@ -12,8 +13,23 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-import type { NearbyRestaurant } from '../types';
-import type { JSX } from 'react';
+import type { NearbyRestaurant } from '../../types';
+
+function formatRelativeReview(date?: string): string | null {
+  if (!date) {
+    return null;
+  }
+
+  const deltaMs = Date.now() - new Date(date).getTime();
+  const hours = Math.floor(deltaMs / (1000 * 60 * 60));
+
+  if (hours < 24) {
+    return `${hours}h ago`;
+  }
+
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export interface RestaurantCardProps {
   restaurant: NearbyRestaurant;
@@ -26,6 +42,9 @@ export function RestaurantCard({
   onBookmark,
   isBookmarked = false,
 }: RestaurantCardProps): JSX.Element {
+  const lastReview = formatRelativeReview(restaurant.lastReviewAt);
+  const queueMinutes = restaurant.queueEstimateMinutes ?? 10;
+
   const handleBookmark = () => {
     onBookmark?.(restaurant.id);
   };
@@ -69,7 +88,12 @@ export function RestaurantCard({
 
       <CardHeader className="space-y-1 px-5 pb-2 sm:px-6">
         <CardTitle className="flex items-start justify-between text-lg tracking-tight text-foreground">
-          <span className="max-w-[70%] truncate font-semibold">{restaurant.name}</span>
+          <span className="max-w-[70%] truncate font-semibold">
+            {restaurant.name}
+            <span className="block text-xs font-normal uppercase tracking-wide text-muted-foreground">
+              {restaurant.area}
+            </span>
+          </span>
           <Badge
             variant="outline"
             className="inline-flex items-center gap-1 rounded-full border-primary/20 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
@@ -85,7 +109,7 @@ export function RestaurantCard({
       </CardHeader>
 
       <CardContent className="space-y-3 px-5 sm:px-6">
-        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
           <span className="inline-flex items-center gap-1.5">
             <MapPin className="size-4 text-primary" />
             {restaurant.distance}
@@ -93,8 +117,16 @@ export function RestaurantCard({
           <Separator orientation="vertical" className="h-4 bg-border/60" />
           <span className="inline-flex items-center gap-1.5">
             <Clock className="size-4 text-primary" />
-            {restaurant.etaMinutes} min
+            {restaurant.etaMinutes} min · Queue {queueMinutes}m
           </span>
+          {lastReview ? (
+            <>
+              <Separator orientation="vertical" className="h-4 bg-border/60" />
+              <span className="text-xs uppercase tracking-wide text-muted-foreground">
+                Updated {lastReview}
+              </span>
+            </>
+          ) : null}
         </div>
         <div className="flex flex-wrap gap-2">
           {restaurant.tags.map((tag) => (
@@ -107,11 +139,25 @@ export function RestaurantCard({
             </Badge>
           ))}
         </div>
+        {restaurant.dietaryTags?.length ? (
+          <div className="flex flex-wrap gap-2">
+            {restaurant.dietaryTags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="secondary"
+                className="rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold text-emerald-800"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
       </CardContent>
 
       <CardFooter className="justify-between px-5 pb-5 pt-0 sm:px-6">
         <div className="text-sm text-muted-foreground">
           <p>“Everything here feels curated with care.”</p>
+          <p className="text-xs">Latest review {lastReview ?? 'pending'}</p>
         </div>
         <Button
           variant="secondary"

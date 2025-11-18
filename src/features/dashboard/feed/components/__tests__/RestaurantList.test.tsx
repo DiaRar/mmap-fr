@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { NearbyRestaurant } from '../../types';
+import type { NearbyRestaurant } from '../../../types';
 import { RestaurantList } from '../RestaurantList';
 import { describe, expect, it, vi } from 'vitest';
 
@@ -18,6 +18,8 @@ const mockRestaurants: NearbyRestaurant[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?auto=format&fit=crop&w=900&q=80',
     tags: ['Cozy', 'Small plates'],
+    area: 'North quad',
+    coordinates: { lat: 36.37, lng: 127.36 },
   },
   {
     id: 'lumen-cafe',
@@ -31,6 +33,8 @@ const mockRestaurants: NearbyRestaurant[] = [
     imageUrl:
       'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=900&q=80',
     tags: ['Workspace', 'Bakery'],
+    area: 'Campus hub',
+    coordinates: { lat: 36.36, lng: 127.35 },
   },
 ];
 

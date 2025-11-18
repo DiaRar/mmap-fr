@@ -2,6 +2,8 @@ import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react-swc';
 import { fileURLToPath, URL } from 'node:url';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { ViteMcp } from 'vite-plugin-mcp'
+
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -19,6 +21,7 @@ export default defineConfig({
       brotliSize: true,
       template: 'raw-data',
     }),
+    ViteMcp()
   ],
   resolve: {
     alias: {

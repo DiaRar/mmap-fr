@@ -1,6 +1,6 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import type { NearbyRestaurant } from '../types';
+import type { NearbyRestaurant } from '../../types';
 import { RestaurantCard } from './RestaurantCard';
 import type { JSX } from 'react';
 
