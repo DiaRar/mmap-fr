@@ -1,10 +1,10 @@
-import { useCallback, useMemo, useState, type JSX } from 'react';
+import { useCallback, useMemo, useState, useEffect, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
 import { z } from 'zod';
-import { ArrowLeft, Sparkles } from 'lucide-react';
+import { ArrowLeft, Sparkles, Trophy } from 'lucide-react';
 import { motion } from 'motion/react';
 
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,9 @@ import { ReviewCurrencySelector } from '@/features/dashboard/submission/componen
 import { DietaryTagSelector } from '@/features/dashboard/submission/components/DietaryTagSelector';
 import { ReviewRatingField } from '@/features/dashboard/submission/components/ReviewRatingField';
 import { ReviewDraftList } from '@/features/dashboard/submission/components/ReviewDraftList';
+import { RestaurantSelector } from '@/features/dashboard/submission/components/RestaurantSelector';
+import { MealSelector } from '@/features/dashboard/submission/components/MealSelector';
+import { mockRestaurants } from '@/features/dashboard/data/mock-data';
 
 const dietaryOptions = [
   'Halal',
@@ -44,21 +47,36 @@ const dietaryOptions = [
 
 const CURRENCIES = ['₩', '$'] as const;
 
-const reviewSchema = z.object({
-  restaurantName: z.string().min(2, 'Add the restaurant name.'),
-  mealName: z.string().min(2, 'Give the dish a memorable name.'),
-  price: z.number().min(1000, 'Share the price (₩1,000+).'),
-  currency: z.enum(CURRENCIES, {
-    message: 'Select a currency.',
-  }),
-  rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
-  dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
-  visitDate: z.string().min(1, 'Tell us when you visited.'),
-  review: z.string().min(40, 'Leave at least 40 characters for context.'),
-  photo: z.string().optional(),
-});
+const createReviewSchema = (isExistingMeal: boolean) =>
+  z.object({
+    restaurantName: z.string().min(2, 'Add the restaurant name.'),
+    mealName: z.string().min(2, 'Give the dish a memorable name.'),
+    price: isExistingMeal
+      ? z.number().optional()
+      : z.number().min(1000, 'Share the price (₩1,000+).'),
+    currency: isExistingMeal
+      ? z.enum(CURRENCIES).optional()
+      : z.enum(CURRENCIES, {
+          message: 'Select a currency.',
+        }),
+    rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
+    dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
+    visitDate: z.string().min(1, 'Tell us when you visited.'),
+    review: z.string().min(40, 'Leave at least 40 characters for context.'),
+    photo: z.string().optional(),
+  });
 
-type ReviewFormValues = z.infer<typeof reviewSchema>;
+type ReviewFormValues = {
+  restaurantName: string;
+  mealName: string;
+  price?: number;
+  currency?: CurrencyOption;
+  rating: number;
+  dietaryTags: DietaryTag[];
+  visitDate: string;
+  review: string;
+  photo?: string;
+};
 type CurrencyOption = (typeof CURRENCIES)[number];
 
 const slugify = (value: string) =>
@@ -72,11 +90,15 @@ export function ReviewFormPage(): JSX.Element {
   const navigate = useNavigate();
   const addReviewDraft = useMealmapStore((state) => state.addReviewDraft);
   const reviewDrafts = useMealmapStore((state) => state.reviewDrafts);
+  const addPoints = useMealmapStore((state) => state.addPoints);
+  const userPoints = useMealmapStore((state) => state.userPoints);
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [isExistingMeal, setIsExistingMeal] = useState(false);
+  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | undefined>();
 
   const form = useForm<ReviewFormValues>({
-    resolver: zodResolver(reviewSchema),
+    resolver: zodResolver(createReviewSchema(isExistingMeal)),
     defaultValues: {
       restaurantName: '',
       mealName: '',
@@ -89,6 +111,14 @@ export function ReviewFormPage(): JSX.Element {
       photo: undefined,
     },
   });
+
+  // Update resolver when isExistingMeal changes
+  useEffect(() => {
+    form.clearErrors('price');
+    form.clearErrors('currency');
+    // Re-validate with new schema
+    form.trigger(['price', 'currency']);
+  }, [isExistingMeal, form]);
 
   const watchPrice = form.watch('price');
   const currentRating = form.watch('rating');
@@ -129,6 +159,37 @@ export function ReviewFormPage(): JSX.Element {
     navigate('/', { replace: true });
   }, [navigate]);
 
+  const handleRestaurantChange = useCallback(
+    (restaurantName: string) => {
+      form.setValue('restaurantName', restaurantName, { shouldValidate: true });
+      const restaurant = mockRestaurants.find((r) => r.name === restaurantName);
+      setSelectedRestaurantId(restaurant?.id);
+      // Reset meal when restaurant changes
+      form.setValue('mealName', '');
+      setIsExistingMeal(false);
+    },
+    [form]
+  );
+
+  const handleMealChange = useCallback(
+    (mealName: string, isExisting: boolean) => {
+      form.setValue('mealName', mealName, { shouldValidate: true });
+      setIsExistingMeal(isExisting);
+      if (isExisting) {
+        // Clear price for existing meals
+        form.setValue('price', undefined);
+        form.setValue('currency', undefined);
+      } else {
+        // Set default price for new meals
+        form.setValue('price', 12000);
+        form.setValue('currency', '₩');
+      }
+      // Re-validate with new schema
+      form.trigger();
+    },
+    [form]
+  );
+
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -144,13 +205,16 @@ export function ReviewFormPage(): JSX.Element {
   };
 
   const onSubmit = (values: ReviewFormValues) => {
+    const restaurantId = selectedRestaurantId || slugify(values.restaurantName);
+    const pointsAwarded = 50;
+
     const draft = {
       id: crypto.randomUUID(),
-      restaurantId: slugify(values.restaurantName),
+      restaurantId,
       restaurantName: values.restaurantName.trim(),
       mealName: values.mealName.trim(),
-      price: values.price,
-      currency: values.currency,
+      price: values.price || 0,
+      currency: values.currency || '₩',
       rating: values.rating,
       tags: values.dietaryTags,
       review: values.review.trim(),
@@ -159,10 +223,16 @@ export function ReviewFormPage(): JSX.Element {
     };
 
     addReviewDraft(draft);
-    toast.success('Review saved', {
-      description: `${values.mealName} at ${values.restaurantName} is queued for sharing.`,
+    addPoints(pointsAwarded);
+    
+    // Show success toast with points
+    toast.success('Review saved!', {
+      description: `🏆 +${pointsAwarded} points! ${values.mealName} at ${values.restaurantName} is queued for sharing.`,
+      duration: 5000,
     });
     setPhotoPreview(null);
+    setIsExistingMeal(false);
+    setSelectedRestaurantId(undefined);
     form.reset();
   };
 
@@ -186,10 +256,21 @@ export function ReviewFormPage(): JSX.Element {
         >
           <ArrowLeft className="size-4" />
         </Button>
-        <div className="flex flex-col gap-1">
-          <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary">
-            <Sparkles className="size-4" />
-            Community review
+        <div className="flex flex-1 flex-col gap-1">
+          <div className="flex items-center justify-between">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-primary">
+              <Sparkles className="size-4" />
+              Community review
+            </div>
+            <motion.div
+              className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Trophy className="size-3.5" />
+              <span>{userPoints} pts</span>
+            </motion.div>
           </div>
           <h1 className="text-xl font-semibold tracking-tight text-foreground lg:text-2xl">
             Leave a quick photo review
@@ -202,7 +283,7 @@ export function ReviewFormPage(): JSX.Element {
 
       <main className="flex flex-1 flex-col gap-6 px-5 pb-28 lg:px-8 lg:pb-16">
         <motion.form
-          className="flex flex-1 flex-col gap-6 rounded-3xl border border-border/40 bg-background/85 px-5 py-6 shadow-md shadow-primary/5 backdrop-blur-sm lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:gap-8 lg:p-8"
+          className="flex flex-1 flex-col gap-6 rounded-3xl border border-border/40 bg-gradient-to-br from-background/95 via-background/90 to-primary/5 px-5 py-6 shadow-md shadow-primary/10 backdrop-blur-sm lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:gap-8 lg:p-8"
           onSubmit={form.handleSubmit(onSubmit)}
           initial={{ opacity: 0, y: 24 }}
           animate={{ opacity: 1, y: 0 }}
@@ -212,87 +293,72 @@ export function ReviewFormPage(): JSX.Element {
             <FieldGroup className="gap-6">
               <PhotoUploadField photoPreview={photoPreview} onPhotoUpload={handlePhotoUpload} />
 
-              <Field>
-                <FieldLabel>
-                  <FieldTitle>Restaurant</FieldTitle>
-                  <FieldDescription>Where did you eat? Include pop-ups or kiosks too.</FieldDescription>
-                </FieldLabel>
-                <FieldContent>
-                  <Input placeholder="KAIST Terrace Kitchen" {...form.register('restaurantName')} />
-                  <FieldError
-                    errors={
-                      form.formState.errors.restaurantName
-                        ? [{ message: form.formState.errors.restaurantName.message }]
-                        : undefined
-                    }
-                  />
-                </FieldContent>
-              </Field>
+              <RestaurantSelector
+                value={form.watch('restaurantName')}
+                onChange={handleRestaurantChange}
+                error={form.formState.errors.restaurantName?.message}
+              />
 
-              <Field>
-                <FieldLabel>
-                  <FieldTitle>Meal name</FieldTitle>
-                  <FieldDescription>Call out what you ordered.</FieldDescription>
-                </FieldLabel>
-                <FieldContent>
-                  <Input placeholder="Midnight gochujang pasta" {...form.register('mealName')} />
-                  <FieldError
-                    errors={
-                      form.formState.errors.mealName
-                        ? [{ message: form.formState.errors.mealName.message }]
-                        : undefined
-                    }
-                  />
-                </FieldContent>
-              </Field>
+              <MealSelector
+                value={form.watch('mealName')}
+                onChange={handleMealChange}
+                restaurantId={selectedRestaurantId}
+                error={form.formState.errors.mealName?.message}
+              />
             </FieldGroup>
 
             <FieldSeparator>Experience</FieldSeparator>
 
             <FieldGroup className="gap-6">
-              <Field>
-                <FieldLabel>
-                  <FieldTitle>Price paid</FieldTitle>
-                  <FieldDescription>Rough total including sides or drinks.</FieldDescription>
-                </FieldLabel>
-                <FieldContent className="gap-3">
-                  <Controller
-                    name="price"
-                    control={form.control}
-                    render={({ field }) => (
-                      <>
-                        <Slider
-                          value={[field.value]}
-                          onValueChange={(value) => field.onChange(value[0])}
-                          min={1000}
-                          max={50000}
-                          step={500}
-                          aria-label="Price in won"
-                        />
-                        <div className="flex items-center justify-between text-xs text-muted-foreground">
-                          <span>₩1k</span>
-                          <span>{new Intl.NumberFormat('en', { notation: 'compact' }).format(field.value)}₩</span>
-                          <span>₩50k</span>
-                        </div>
-                      </>
-                    )}
-                  />
-                  <FieldError
-                    errors={
-                      form.formState.errors.price
-                        ? [{ message: form.formState.errors.price.message }]
-                        : undefined
-                    }
-                  />
-                </FieldContent>
-              </Field>
+              {!isExistingMeal && (
+                <>
+                  <Field>
+                    <FieldLabel>
+                      <FieldTitle>Price paid</FieldTitle>
+                      <FieldDescription>Rough total including sides or drinks.</FieldDescription>
+                    </FieldLabel>
+                    <FieldContent className="gap-3">
+                      <Controller
+                        name="price"
+                        control={form.control}
+                        render={({ field }) => (
+                          <>
+                            <Slider
+                              value={[field.value || 12000]}
+                              onValueChange={(value) => field.onChange(value[0])}
+                              min={1000}
+                              max={50000}
+                              step={500}
+                              aria-label="Price in won"
+                            />
+                            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                              <span>₩1k</span>
+                              <span>
+                                {new Intl.NumberFormat('en', { notation: 'compact' }).format(field.value || 12000)}₩
+                              </span>
+                              <span>₩50k</span>
+                            </div>
+                          </>
+                        )}
+                      />
+                      <FieldError
+                        errors={
+                          form.formState.errors.price
+                            ? [{ message: form.formState.errors.price.message }]
+                            : undefined
+                        }
+                      />
+                    </FieldContent>
+                  </Field>
 
-              <ReviewCurrencySelector
-                value={currentCurrency}
-                options={CURRENCIES}
-                onChange={handleCurrencyChange}
-                error={form.formState.errors.currency?.message}
-              />
+                  <ReviewCurrencySelector
+                    value={currentCurrency || '₩'}
+                    options={CURRENCIES}
+                    onChange={handleCurrencyChange}
+                    error={form.formState.errors.currency?.message}
+                  />
+                </>
+              )}
 
               <Field>
                 <FieldLabel>
@@ -349,7 +415,7 @@ export function ReviewFormPage(): JSX.Element {
             </FieldGroup>
           </FieldSet>
 
-          <aside className="flex flex-col justify-between gap-4 rounded-3xl border border-border/30 bg-background/80 p-5 shadow-sm shadow-primary/5">
+          <aside className="flex flex-col justify-between gap-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background/90 to-background/95 p-5 shadow-lg shadow-primary/10">
             <div className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">Ready to submit?</h2>
               <p className="text-sm text-muted-foreground">
@@ -361,12 +427,17 @@ export function ReviewFormPage(): JSX.Element {
                 Quick preview
               </p>
               <p className="text-sm text-foreground">
-                {form.watch('mealName') || 'Untitled meal'} ·{' '}
-                {new Intl.NumberFormat('en-US', {
-                  style: 'currency',
-                  currency: currentCurrency === '$' ? 'USD' : 'KRW',
-                  maximumFractionDigits: 0,
-                }).format(watchPrice)}
+                {form.watch('mealName') || 'Untitled meal'}
+                {!isExistingMeal && watchPrice && (
+                  <>
+                    {' · '}
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: (currentCurrency || '₩') === '$' ? 'USD' : 'KRW',
+                      maximumFractionDigits: 0,
+                    }).format(watchPrice)}
+                  </>
+                )}
               </p>
             </div>
             <div className="flex flex-col gap-3">

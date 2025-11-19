@@ -16,6 +16,8 @@ interface MealmapState {
   markRecommendation: (id: string, response: RecommendationResponse) => void;
   reviewDrafts: ReviewDraft[];
   addReviewDraft: (draft: ReviewDraft) => void;
+  userPoints: number;
+  addPoints: (points: number) => void;
 }
 
 export const useMealmapStore = create<MealmapState>((set) => ({
@@ -43,5 +45,10 @@ export const useMealmapStore = create<MealmapState>((set) => ({
   addReviewDraft: (draft) =>
     set((state) => ({
       reviewDrafts: [draft, ...state.reviewDrafts].slice(0, 5),
+    })),
+  userPoints: 0,
+  addPoints: (points) =>
+    set((state) => ({
+      userPoints: state.userPoints + points,
     })),
 }));
