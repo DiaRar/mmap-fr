@@ -1,6 +1,5 @@
 import { Github, Mail } from 'lucide-react';
 import {
-  type FormEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
@@ -20,6 +19,10 @@ import {
   useTransform,
   type Transition,
 } from 'motion/react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import { useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -28,9 +31,21 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { AuthCard, AuthDivider, AuthFooterLink, AuthLayout } from '../components';
 import { cn } from '@/lib/utils';
+import { RegisterSchema } from '../schemas';
+import { useAuthStore } from '../store/useAuthStore';
+import { toast } from 'sonner';
 
 export function RegisterPage(): JSX.Element {
-  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const { register: registerUser, isLoading } = useAuthStore();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<z.infer<typeof RegisterSchema>>({
+    resolver: zodResolver(RegisterSchema),
+  });
+
   const pendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
 
@@ -75,6 +90,16 @@ export function RegisterPage(): JSX.Element {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [enableInteractiveTilt]);
+
+  const onSubmit = async (data: z.infer<typeof RegisterSchema>) => {
+    try {
+      await registerUser(data);
+      toast.success('Account created successfully');
+      navigate('/', { replace: true });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to register');
+    }
+  };
 
   const cardShadow = useTransform([rotateX, rotateY], ([x, y]) => {
     const nextX = typeof x === 'number' ? x : 0;
@@ -216,18 +241,6 @@ export function RegisterPage(): JSX.Element {
     []
   );
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (isLoading) {
-      return;
-    }
-
-    setIsLoading(true);
-    pendingTimeout.current = setTimeout(() => {
-      setIsLoading(false);
-    }, 1400);
-  };
-
   return (
     <AuthLayout>
       <MotionConfig transition={{ type: 'spring', stiffness: 170, damping: 18 }}>
@@ -300,7 +313,7 @@ export function RegisterPage(): JSX.Element {
 
               <motion.form
                 className="space-y-5"
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit(onSubmit)}
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -326,16 +339,26 @@ export function RegisterPage(): JSX.Element {
                   <Label htmlFor="full-name">Full name</Label>
                   <Input
                     id="full-name"
-                    name="fullName"
+                    // name="fullName"
                     type="text"
                     autoComplete="name"
                     placeholder="Jamie Doe"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.fullName && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('fullName')}
                     onFocus={() => handleFieldFocus('full-name')}
-                    onBlur={() => handleFieldBlur('full-name')}
+                    onBlur={(e) => {
+                        register('fullName').onBlur(e);
+                        handleFieldBlur('full-name');
+                    }}
                   />
+                  {errors.fullName && (
+                    <p className="text-xs text-destructive mt-1">{errors.fullName.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -354,16 +377,26 @@ export function RegisterPage(): JSX.Element {
                   <Label htmlFor="register-email">Email</Label>
                   <Input
                     id="register-email"
-                    name="email"
+                    // name="email"
                     type="email"
                     autoComplete="email"
                     placeholder="you@example.com"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.email && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('email')}
                     onFocus={() => handleFieldFocus('register-email')}
-                    onBlur={() => handleFieldBlur('register-email')}
+                    onBlur={(e) => {
+                        register('email').onBlur(e);
+                        handleFieldBlur('register-email');
+                    }}
                   />
+                  {errors.email && (
+                    <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -382,16 +415,26 @@ export function RegisterPage(): JSX.Element {
                   <Label htmlFor="register-password">Password</Label>
                   <Input
                     id="register-password"
-                    name="password"
+                    // name="password"
                     type="password"
                     autoComplete="new-password"
                     placeholder="Create a password"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.password && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('password')}
                     onFocus={() => handleFieldFocus('register-password')}
-                    onBlur={() => handleFieldBlur('register-password')}
+                    onBlur={(e) => {
+                        register('password').onBlur(e);
+                        handleFieldBlur('register-password');
+                    }}
                   />
+                  {errors.password && (
+                    <p className="text-xs text-destructive mt-1">{errors.password.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -410,16 +453,26 @@ export function RegisterPage(): JSX.Element {
                   <Label htmlFor="confirm-password">Confirm password</Label>
                   <Input
                     id="confirm-password"
-                    name="confirmPassword"
+                    // name="confirmPassword"
                     type="password"
                     autoComplete="new-password"
                     placeholder="Repeat your password"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.confirmPassword && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('confirmPassword')}
                     onFocus={() => handleFieldFocus('confirm-password')}
-                    onBlur={() => handleFieldBlur('confirm-password')}
+                    onBlur={(e) => {
+                        register('confirmPassword').onBlur(e);
+                        handleFieldBlur('confirm-password');
+                    }}
                   />
+                  {errors.confirmPassword && (
+                    <p className="text-xs text-destructive mt-1">{errors.confirmPassword.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.label

@@ -7,10 +7,11 @@ import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 import { Card, CardContent } from '@/components/ui/card';
 
-import { useRestaurantsQuery } from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
+import { useLocation } from '@/features/dashboard/hooks/useLocation';
+import { useReviews } from '../api';
 import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
-import { RestaurantList } from '../components/RestaurantList';
+import { FeedList } from '../components/FeedList';
 import { RestaurantSearch } from '../components/RestaurantSearch';
 
 const quickInsights = [
@@ -22,33 +23,16 @@ const quickInsights = [
 
 export function FeedPage(): JSX.Element {
   const navigate = useNavigate();
-  const { data: restaurants = [], isPending } = useRestaurantsQuery();
+  useLocation();
+  
   const searchTerm = useMealmapStore((state) => state.searchTerm);
   const setSearchTerm = useMealmapStore((state) => state.setSearchTerm);
   const bookmarkedIds = useMealmapStore((state) => state.bookmarkedIds);
-  const toggleBookmark = useMealmapStore((state) => state.toggleBookmark);
-
-  const filteredRestaurants = useMemo(() => {
-    if (isPending) {
-      return [];
-    }
-
-    const needle = searchTerm.trim().toLowerCase();
-
-    if (!needle) {
-      return restaurants;
-    }
-
-    return restaurants.filter((restaurant) => {
-      const fields = [
-        restaurant.name,
-        restaurant.cuisine,
-        restaurant.tags.join(' '),
-        restaurant.priceRange,
-      ];
-      return fields.some((field) => field.toLowerCase().includes(needle));
-    });
-  }, [restaurants, searchTerm, isPending]);
+  
+  const { data: reviewsPage, isPending } = useReviews({
+    searchTerm: searchTerm,
+    // radius_m: 5000 // Optional: limit to 5km if location available
+  });
 
   const bookmarkedCount = useMemo(
     () => Object.values(bookmarkedIds).filter(Boolean).length,
@@ -114,11 +98,7 @@ export function FeedPage(): JSX.Element {
                 <Spinner />
               </div>
             ) : (
-              <RestaurantList
-                restaurants={filteredRestaurants}
-                onBookmark={toggleBookmark}
-                bookmarked={bookmarkedIds}
-              />
+              <FeedList reviews={reviewsPage?.results || []} />
             )}
           </div>
           <Separator className="bg-border/60 lg:hidden" />

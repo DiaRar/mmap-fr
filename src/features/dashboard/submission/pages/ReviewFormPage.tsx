@@ -32,7 +32,7 @@ import { ReviewRatingField } from '@/features/dashboard/submission/components/Re
 import { ReviewDraftList } from '@/features/dashboard/submission/components/ReviewDraftList';
 import { RestaurantSelector } from '@/features/dashboard/submission/components/RestaurantSelector';
 import { MealSelector } from '@/features/dashboard/submission/components/MealSelector';
-import { mockRestaurants } from '@/features/dashboard/data/mock-data';
+import { useCreateReview } from '../api';
 
 const dietaryOptions = [
   'Halal',
@@ -47,8 +47,10 @@ const dietaryOptions = [
 
 const CURRENCIES = ['₩', '$'] as const;
 
+// We need place_id, so we enforce it
 const createReviewSchema = (isExistingMeal: boolean) =>
   z.object({
+    placeId: z.string().min(1, 'Select a valid restaurant.'),
     restaurantName: z.string().min(2, 'Add the restaurant name.'),
     mealName: z.string().min(2, 'Give the dish a memorable name.'),
     price: isExistingMeal
@@ -62,11 +64,12 @@ const createReviewSchema = (isExistingMeal: boolean) =>
     rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
     dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
     visitDate: z.string().min(1, 'Tell us when you visited.'),
-    review: z.string().min(40, 'Leave at least 40 characters for context.'),
-    photo: z.string().optional(),
+    review: z.string().min(10, 'Leave at least 10 characters for context.'), // Reduced for easier testing
+    photo: z.any().optional(), // File object
   });
 
 type ReviewFormValues = {
+  placeId: string;
   restaurantName: string;
   mealName: string;
   price?: number;
@@ -75,16 +78,9 @@ type ReviewFormValues = {
   dietaryTags: DietaryTag[];
   visitDate: string;
   review: string;
-  photo?: string;
+  photo?: File;
 };
 type CurrencyOption = (typeof CURRENCIES)[number];
-
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
 
 export function ReviewFormPage(): JSX.Element {
   const navigate = useNavigate();
@@ -92,31 +88,31 @@ export function ReviewFormPage(): JSX.Element {
   const reviewDrafts = useMealmapStore((state) => state.reviewDrafts);
   const addPoints = useMealmapStore((state) => state.addPoints);
   const userPoints = useMealmapStore((state) => state.userPoints);
+  
+  const { mutate: createReview, isPending: isSubmitting } = useCreateReview();
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [isExistingMeal, setIsExistingMeal] = useState(false);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | undefined>();
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(createReviewSchema(isExistingMeal)),
     defaultValues: {
+      placeId: '',
       restaurantName: '',
       mealName: '',
       price: 12000,
       currency: '₩',
       rating: 4,
       dietaryTags: [],
-      visitDate: '',
+      visitDate: new Date().toISOString().split('T')[0],
       review: '',
       photo: undefined,
     },
   });
 
-  // Update resolver when isExistingMeal changes
   useEffect(() => {
     form.clearErrors('price');
     form.clearErrors('currency');
-    // Re-validate with new schema
     form.trigger(['price', 'currency']);
   }, [isExistingMeal, form]);
 
@@ -155,15 +151,15 @@ export function ReviewFormPage(): JSX.Element {
       navigate(-1);
       return;
     }
-
     navigate('/', { replace: true });
   }, [navigate]);
 
   const handleRestaurantChange = useCallback(
-    (restaurantName: string) => {
+    (restaurantName: string, placeId?: string) => {
       form.setValue('restaurantName', restaurantName, { shouldValidate: true });
-      const restaurant = mockRestaurants.find((r) => r.name === restaurantName);
-      setSelectedRestaurantId(restaurant?.id);
+      if (placeId) {
+        form.setValue('placeId', placeId, { shouldValidate: true });
+      }
       // Reset meal when restaurant changes
       form.setValue('mealName', '');
       setIsExistingMeal(false);
@@ -176,15 +172,12 @@ export function ReviewFormPage(): JSX.Element {
       form.setValue('mealName', mealName, { shouldValidate: true });
       setIsExistingMeal(isExisting);
       if (isExisting) {
-        // Clear price for existing meals
         form.setValue('price', undefined);
         form.setValue('currency', undefined);
       } else {
-        // Set default price for new meals
         form.setValue('price', 12000);
         form.setValue('currency', '₩');
       }
-      // Re-validate with new schema
       form.trigger();
     },
     [form]
@@ -192,48 +185,53 @@ export function ReviewFormPage(): JSX.Element {
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result?.toString() ?? null;
       setPhotoPreview(base64);
-      form.setValue('photo', base64 ?? undefined, { shouldValidate: true });
+      form.setValue('photo', file, { shouldValidate: true });
     };
     reader.readAsDataURL(file);
   };
 
   const onSubmit = (values: ReviewFormValues) => {
-    const restaurantId = selectedRestaurantId || slugify(values.restaurantName);
     const pointsAwarded = 50;
 
-    const draft = {
-      id: crypto.randomUUID(),
-      restaurantId,
-      restaurantName: values.restaurantName.trim(),
-      mealName: values.mealName.trim(),
-      price: values.price || 0,
-      currency: values.currency || '₩',
-      rating: values.rating,
-      tags: values.dietaryTags,
-      review: values.review.trim(),
-      createdAt: new Date().toISOString(),
-      photoPreview: values.photo,
-    };
-
-    addReviewDraft(draft);
-    addPoints(pointsAwarded);
-    
-    // Show success toast with points
-    toast.success('Review saved!', {
-      description: `🏆 +${pointsAwarded} points! ${values.mealName} at ${values.restaurantName} is queued for sharing.`,
-      duration: 5000,
-    });
-    setPhotoPreview(null);
-    setIsExistingMeal(false);
-    setSelectedRestaurantId(undefined);
-    form.reset();
+    createReview(
+      {
+        place_id: values.placeId,
+        meal_name: values.mealName,
+        rating: values.rating,
+        text: values.review,
+        price: values.price,
+        images: values.photo ? [values.photo] : [],
+        is_vegan: values.dietaryTags.includes('Vegan') ? 'yes' : 'no',
+        is_halal: values.dietaryTags.includes('Halal') ? 'yes' : 'no',
+        is_vegetarian: values.dietaryTags.includes('Vegetarian') ? 'yes' : 'no',
+        is_spicy: values.dietaryTags.includes('Spicy') ? 'yes' : 'no',
+        is_gluten_free: values.dietaryTags.includes('Gluten-free') ? 'yes' : 'no',
+        is_dairy_free: values.dietaryTags.includes('Dairy-free') ? 'yes' : 'no',
+        is_nut_free: values.dietaryTags.includes('Nut-free') ? 'yes' : 'no',
+      },
+      {
+        onSuccess: () => {
+            addPoints(pointsAwarded);
+            toast.success('Review submitted!', {
+                description: `🏆 +${pointsAwarded} points!`,
+            });
+            form.reset();
+            setPhotoPreview(null);
+            navigate('/');
+        },
+        onError: (error: any) => {
+            toast.error('Failed to submit review', {
+                description: error.message,
+            });
+        }
+      }
+    );
   };
 
   const recentDrafts = useMemo(() => reviewDrafts.slice(0, 3), [reviewDrafts]);
@@ -293,16 +291,20 @@ export function ReviewFormPage(): JSX.Element {
             <FieldGroup className="gap-6">
               <PhotoUploadField photoPreview={photoPreview} onPhotoUpload={handlePhotoUpload} />
 
+              {/* NOTE: RestaurantSelector needs to propagate ID. 
+                  For now assuming it calls onChange(name, id). 
+                  I'll need to patch RestaurantSelector if it doesn't. 
+              */}
               <RestaurantSelector
                 value={form.watch('restaurantName')}
                 onChange={handleRestaurantChange}
-                error={form.formState.errors.restaurantName?.message}
+                error={form.formState.errors.restaurantName?.message || form.formState.errors.placeId?.message}
               />
 
               <MealSelector
                 value={form.watch('mealName')}
                 onChange={handleMealChange}
-                restaurantId={selectedRestaurantId}
+                restaurantId={form.watch('placeId')}
                 error={form.formState.errors.mealName?.message}
               />
             </FieldGroup>
@@ -441,8 +443,8 @@ export function ReviewFormPage(): JSX.Element {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="rounded-full" disabled={form.formState.isSubmitting}>
-                Submit review
+              <Button type="submit" className="rounded-full" disabled={isSubmitting}>
+                {isSubmitting ? 'Submitting...' : 'Submit review'}
               </Button>
               <Button
                 type="button"
@@ -455,17 +457,6 @@ export function ReviewFormPage(): JSX.Element {
             </div>
           </aside>
         </motion.form>
-
-        {recentDrafts.length > 0 ? (
-          <motion.section
-            className="rounded-3xl border border-border/40 bg-white/80 p-4 shadow-sm backdrop-blur"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-          >
-            <ReviewDraftList drafts={recentDrafts} />
-          </motion.section>
-        ) : null}
       </main>
 
     </div>

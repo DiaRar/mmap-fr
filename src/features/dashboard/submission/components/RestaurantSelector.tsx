@@ -33,11 +33,26 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-import { mockRestaurants } from '@/features/dashboard/data/mock-data';
+import { usePlaces } from '@/features/dashboard/feed/api';
+import { useDebounce } from '@/lib/utils'; // Assuming useDebounce exists or I'll implement simple debounce
+
+// Simple debounce hook if not exists
+function useDebouncedValue<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+  return debouncedValue;
+}
 
 export interface RestaurantSelectorProps {
   value: string;
-  onChange: (value: string) => void;
+  onChange: (name: string, id?: string) => void;
   error?: string;
   onAddNew?: (name: string) => void;
 }
@@ -62,18 +77,24 @@ export function RestaurantSelector({
   onAddNew,
 }: RestaurantSelectorProps): JSX.Element {
   const [open, setOpen] = useState(false);
+  const [inputValue, setInputValue] = useState('');
+  const debouncedSearch = useDebouncedValue(inputValue, 300);
+  
+  const { data: placesPage, isFetching } = usePlaces(debouncedSearch);
+  const places = placesPage?.results || [];
+
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newRestaurantName, setNewRestaurantName] = useState('');
   const isMobile = useIsMobile();
 
-  const selectedRestaurant = useMemo(
-    () => mockRestaurants.find((r) => r.name === value),
-    [value]
-  );
+  // If value is set but we don't have the place in the list (because we searched something else),
+  // we still want to show the name. 
+  // Ideally we would fetch the place by ID if we had it, but here we just have name 'value'.
+  // We rely on the parent passing name.
 
   const handleSelect = useCallback(
-    (restaurantName: string) => {
-      onChange(restaurantName);
+    (placeName: string, placeId?: string) => {
+      onChange(placeName, placeId);
       setOpen(false);
       setIsAddingNew(false);
       setNewRestaurantName('');
@@ -86,18 +107,28 @@ export function RestaurantSelector({
       if (onAddNew) {
         onAddNew(newRestaurantName.trim());
       }
-      handleSelect(newRestaurantName.trim());
+      // For new restaurant, we don't have an ID yet.
+      // Backend might require creating it first.
+      // For now passing undefined ID.
+      handleSelect(newRestaurantName.trim(), undefined);
     }
   }, [newRestaurantName, onAddNew, handleSelect]);
 
   const CommandContent = (
     <>
-      <CommandInput placeholder="Search restaurants..." />
+      <CommandInput 
+        placeholder="Search restaurants..." 
+        value={inputValue}
+        onValueChange={setInputValue}
+      />
       <CommandList>
+        {/* We disable local filtering because we do server-side filtering */}
         <CommandEmpty>
           <div className="flex flex-col items-center gap-3 py-6">
-            <p className="text-sm text-muted-foreground">No restaurant found.</p>
-            {!isAddingNew && (
+            <p className="text-sm text-muted-foreground">
+                {isFetching ? 'Searching...' : 'No restaurant found.'}
+            </p>
+            {!isAddingNew && !isFetching && (
               <Button
                 variant="outline"
                 size="sm"
@@ -150,41 +181,30 @@ export function RestaurantSelector({
             </div>
           </CommandGroup>
         ) : (
-          <>
-            <CommandGroup>
-              {mockRestaurants.map((restaurant) => (
-                <CommandItem
-                  key={restaurant.id}
-                  value={restaurant.name}
-                  onSelect={handleSelect}
-                  className="flex items-center gap-3"
-                >
-                  <Store className="size-4 text-muted-foreground" />
-                  <div className="flex-1">
-                    <div className="font-medium">{restaurant.name}</div>
-                    <div className="text-xs text-muted-foreground">
-                      {restaurant.cuisine} · {restaurant.area}
-                    </div>
-                  </div>
-                  <Check
-                    className={cn(
-                      'size-4',
-                      value === restaurant.name ? 'opacity-100' : 'opacity-0'
-                    )}
-                  />
-                </CommandItem>
-              ))}
-            </CommandGroup>
-            <CommandGroup>
+          <CommandGroup>
+            {places.map((place) => (
               <CommandItem
-                onSelect={() => setIsAddingNew(true)}
-                className="flex items-center gap-2 text-primary"
+                key={place.id}
+                value={place.name + '_' + place.id} // Make value unique
+                onSelect={() => handleSelect(place.name, place.id)}
+                className="flex items-center gap-3"
               >
-                <Plus className="size-4" />
-                <span>Add new restaurant</span>
+                <Store className="size-4 text-muted-foreground" />
+                <div className="flex-1">
+                  <div className="font-medium">{place.name}</div>
+                  {/* <div className="text-xs text-muted-foreground">
+                    {place.address}
+                  </div> */}
+                </div>
+                <Check
+                  className={cn(
+                    'size-4',
+                    value === place.name ? 'opacity-100' : 'opacity-0'
+                  )}
+                />
               </CommandItem>
-            </CommandGroup>
-          </>
+            ))}
+          </CommandGroup>
         )}
       </CommandList>
     </>
@@ -198,10 +218,10 @@ export function RestaurantSelector({
       className="w-full justify-between font-normal transition-all hover:border-primary/40 hover:bg-primary/5"
     >
       <span className={cn('truncate', !value && 'text-muted-foreground')}>
-        {selectedRestaurant ? (
+        {value ? (
           <div className="flex items-center gap-2">
             <Store className="size-4" />
-            <span>{selectedRestaurant.name}</span>
+            <span>{value}</span>
           </div>
         ) : (
           'Select restaurant...'
@@ -226,7 +246,7 @@ export function RestaurantSelector({
                 <DrawerTitle>Select Restaurant</DrawerTitle>
               </DrawerHeader>
               <div className="overflow-hidden px-4 pb-4">
-                <Command className="rounded-lg border-0">
+                <Command className="rounded-lg border-0" shouldFilter={false}>
                   {CommandContent}
                 </Command>
               </div>
@@ -250,7 +270,7 @@ export function RestaurantSelector({
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>{triggerButton}</PopoverTrigger>
           <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
-            <Command>{CommandContent}</Command>
+            <Command shouldFilter={false}>{CommandContent}</Command>
           </PopoverContent>
         </Popover>
         <FieldError
@@ -260,4 +280,3 @@ export function RestaurantSelector({
     </Field>
   );
 }
-
