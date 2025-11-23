@@ -3,14 +3,12 @@ import { MapPin, Star, Clock, User } from 'lucide-react';
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ReviewResponse } from '@/features/dashboard/types';
+import { type ReviewResponse } from '@/features/dashboard/types';
 
 function formatRelativeTime(dateStr: string): string {
   const date = new Date(dateStr);

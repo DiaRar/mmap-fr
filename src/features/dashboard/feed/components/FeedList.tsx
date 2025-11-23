@@ -1,6 +1,6 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 import type { JSX } from 'react';
-import { ReviewResponse } from '@/features/dashboard/types';
+import { type ReviewResponse } from '@/features/dashboard/types';
 import { ReviewCard } from './ReviewCard';
 
 export interface FeedListProps {

@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { apiRequest } from '@/lib/api';
-import { LoginResponse, User } from '@/features/dashboard/types';
+import { apiRequest, setAuthTokenProvider, setUnauthorizedHandler } from '@/lib/api';
+import { type LoginResponse, type User } from '@/features/dashboard/types';
 import { LoginSchema, RegisterSchema } from '../schemas';
 import { z } from 'zod';
 
@@ -15,7 +15,6 @@ interface AuthState {
   login: (data: z.infer<typeof LoginSchema>) => Promise<void>;
   register: (data: z.infer<typeof RegisterSchema>) => Promise<void>;
   logout: () => void;
-  fetchUser: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -30,13 +29,13 @@ export const useAuthStore = create<AuthState>()(
       login: async (data) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await apiRequest<LoginResponse>('/token', {
+          const response = await apiRequest<LoginResponse>('/auth/token', {
             method: 'POST',
             body: JSON.stringify({ email: data.email, password: data.password }),
           });
           
           set({ token: response.access_token, isAuthenticated: true });
-          await get().fetchUser();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           set({ error: err.message || 'Failed to login' });
           throw err;
@@ -49,7 +48,7 @@ export const useAuthStore = create<AuthState>()(
         set({ isLoading: true, error: null });
         try {
            // First register
-           await apiRequest('/register', {
+           await apiRequest('/auth/register', {
             method: 'POST',
             body: JSON.stringify({
                 email: data.email,
@@ -62,6 +61,7 @@ export const useAuthStore = create<AuthState>()(
 
           // Then login automatically
           await get().login({ email: data.email, password: data.password });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         } catch (err: any) {
           set({ error: err.message || 'Failed to register' });
           throw err;
@@ -73,19 +73,6 @@ export const useAuthStore = create<AuthState>()(
       logout: () => {
         set({ user: null, token: null, isAuthenticated: false });
       },
-
-      fetchUser: async () => {
-        const { token } = get();
-        if (!token) return;
-
-        try {
-          const user = await apiRequest<User>('/users/me', { token });
-          set({ user });
-        } catch (error) {
-          console.error('Failed to fetch user', error);
-          get().logout();
-        }
-      },
     }),
     {
       name: 'auth-storage',
@@ -94,3 +81,8 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
+setAuthTokenProvider(() => useAuthStore.getState().token);
+setUnauthorizedHandler(() => {
+  const { logout } = useAuthStore.getState();
+  logout();
+});

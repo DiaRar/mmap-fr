@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect, type JSX } from 'react';
+import { useCallback, useState, useEffect, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -29,7 +29,6 @@ import { PhotoUploadField } from '@/features/dashboard/submission/components/Pho
 import { ReviewCurrencySelector } from '@/features/dashboard/submission/components/ReviewCurrencySelector';
 import { DietaryTagSelector } from '@/features/dashboard/submission/components/DietaryTagSelector';
 import { ReviewRatingField } from '@/features/dashboard/submission/components/ReviewRatingField';
-import { ReviewDraftList } from '@/features/dashboard/submission/components/ReviewDraftList';
 import { RestaurantSelector } from '@/features/dashboard/submission/components/RestaurantSelector';
 import { MealSelector } from '@/features/dashboard/submission/components/MealSelector';
 import { useCreateReview } from '../api';
@@ -84,8 +83,6 @@ type CurrencyOption = (typeof CURRENCIES)[number];
 
 export function ReviewFormPage(): JSX.Element {
   const navigate = useNavigate();
-  const addReviewDraft = useMealmapStore((state) => state.addReviewDraft);
-  const reviewDrafts = useMealmapStore((state) => state.reviewDrafts);
   const addPoints = useMealmapStore((state) => state.addPoints);
   const userPoints = useMealmapStore((state) => state.userPoints);
   
@@ -233,8 +230,6 @@ export function ReviewFormPage(): JSX.Element {
       }
     );
   };
-
-  const recentDrafts = useMemo(() => reviewDrafts.slice(0, 3), [reviewDrafts]);
 
   return (
     <div className="flex flex-1 flex-col">

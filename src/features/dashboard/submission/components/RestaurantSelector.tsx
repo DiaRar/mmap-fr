@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect, type JSX } from 'react';
+import { useCallback, useState, useEffect, type JSX } from 'react';
 import { Check, ChevronsUpDown, Plus, Store } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -34,7 +34,6 @@ import {
 import { Input } from '@/components/ui/input';
 
 import { usePlaces } from '@/features/dashboard/feed/api';
-import { useDebounce } from '@/lib/utils'; // Assuming useDebounce exists or I'll implement simple debounce
 
 // Simple debounce hook if not exists
 function useDebouncedValue<T>(value: T, delay: number): T {
