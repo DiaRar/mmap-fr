@@ -1,9 +1,9 @@
 import { useQuery } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
-import type { Page, ReviewResponse } from '@/features/dashboard/types';
+import type { Page, PlaceBasicInfo } from '@/features/dashboard/types';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
 
-interface UseReviewsOptions {
+interface UsePlacesOptions {
   lat?: number;
   lng?: number;
   radius_m?: number;
@@ -12,14 +12,14 @@ interface UseReviewsOptions {
   searchTerm?: string;
 }
 
-export function useReviews(options: UseReviewsOptions = {}) {
+export function usePlaces(options: UsePlacesOptions = {}) {
   const { userLocation } = useLocation();
   
   // Use provided coords or user location
-  const lat = options.lat ?? userLocation?.lat;
-  const lng = options.lng ?? userLocation?.lng;
+  const lat = options.lat ?? userLocation?.lat ?? 0;
+  const lng = options.lng ?? userLocation?.lng ?? 0;
 
-  const queryKey = ['reviews', { ...options, lat, lng }];
+  const queryKey = ['places', { ...options, lat, lng }];
 
   return useQuery({
     queryKey,
@@ -27,33 +27,33 @@ export function useReviews(options: UseReviewsOptions = {}) {
       const params = new URLSearchParams();
       if (lat !== undefined && lat !== null) params.append('lat', lat.toString());
       if (lng !== undefined && lng !== null) params.append('long', lng.toString());
-      if (options.radius_m) params.append('radius_m', options.radius_m.toString());
+      if (options.radius_m) params.append('radius_meters', options.radius_m.toString());
       if (options.page) params.append('page', options.page.toString());
       if (options.size) params.append('size', options.size.toString());
 
       if (options.searchTerm) {
-        params.append('meal_name', options.searchTerm);
+        params.append('name', options.searchTerm);
       }
 
-      params.append('sort_by', 'created_at');
+      params.append('sort_by', 'distance');
       params.append('sort_order', 'desc');
 
-      return apiRequest<Page<ReviewResponse>>(`/reviews?${params.toString()}`);
+      return apiRequest<Page<PlaceBasicInfo>>(`/places?${params.toString()}`);
     },
     enabled: true,
   });
 }
 
-export function usePlaces(searchTerm: string) {
-    return useQuery({
-        queryKey: ['places', searchTerm],
-        queryFn: async () => {
-            const params = new URLSearchParams();
-            params.append('name', searchTerm);
-            params.append('lat', '0'); // Required by backend
-            params.append('long', '0'); // Required by backend
-            return apiRequest<Page<{ id: string; name: string }>>(`/places?${params.toString()}`);
-        },
-        enabled: searchTerm.length > 0,
-    });
-}
+// export function usePlaces(searchTerm: string) {
+//     return useQuery({
+//         queryKey: ['places', searchTerm],
+//         queryFn: async () => {
+//             const params = new URLSearchParams();
+//             params.append('name', searchTerm);
+//             params.append('lat', '0'); // Required by backend
+//             params.append('long', '0'); // Required by backend
+//             return apiRequest<Page<{ id: string; name: string }>>(`/places?${params.toString()}`);
+//         },
+//         enabled: searchTerm.length > 0,
+//     });
+// }

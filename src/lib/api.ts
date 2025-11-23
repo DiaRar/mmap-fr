@@ -34,6 +34,7 @@ export async function apiRequest<T>(endpoint: string, options: RequestOptions = 
   if (config.body instanceof FormData) {
     // Content-Type header should not be set for FormData,
     // let the browser set it with the boundary
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars, @typescript-eslint/no-explicit-any
     const { 'Content-Type': _contentType, ...restHeaders } = config.headers as any;
     config.headers = restHeaders;
   }

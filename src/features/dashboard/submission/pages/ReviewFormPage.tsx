@@ -222,6 +222,7 @@ export function ReviewFormPage(): JSX.Element {
             setPhotoPreview(null);
             navigate('/');
         },
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         onError: (error: any) => {
             toast.error('Failed to submit review', {
                 description: error.message,

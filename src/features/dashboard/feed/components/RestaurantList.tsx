@@ -1,11 +1,11 @@
 import { ScrollArea } from '@/components/ui/scroll-area';
 
-import type { NearbyRestaurant } from '../../types';
+import type { PlaceBasicInfo } from '../../types';
 import { RestaurantCard } from './RestaurantCard';
 import type { JSX } from 'react';
 
 export interface RestaurantListProps {
-  restaurants: NearbyRestaurant[];
+  restaurants: PlaceBasicInfo[];
   onBookmark?: (restaurantId: string) => void;
   bookmarked?: Record<string, boolean>;
 }

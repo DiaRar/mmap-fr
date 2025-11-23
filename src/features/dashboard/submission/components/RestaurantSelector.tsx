@@ -79,7 +79,7 @@ export function RestaurantSelector({
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebouncedValue(inputValue, 300);
   
-  const { data: placesPage, isFetching } = usePlaces(debouncedSearch);
+  const { data: placesPage, isFetching } = usePlaces({ searchTerm: debouncedSearch });
   const places = placesPage?.results || [];
 
   const [isAddingNew, setIsAddingNew] = useState(false);

@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 
-import type { NearbyRestaurant } from '../../types';
+import type { PlaceBasicInfo } from '../../types';
 
 function formatRelativeReview(date?: string): string | null {
   if (!date) {
@@ -31,8 +31,32 @@ function formatRelativeReview(date?: string): string | null {
   return `${days}d ago`;
 }
 
+function formatDistance(distance?: number | null): string | null {
+  if (distance === undefined || distance === null) {
+    return null;
+  }
+
+  if (distance < 1000) {
+    return `${Math.round(distance)} m`;
+  }
+
+  const km = distance / 1000;
+  return `${km.toFixed(km >= 10 ? 0 : 1)} km`;
+}
+
+function formatCuisine(value?: string | null): string | null {
+  if (!value) {
+    return null;
+  }
+
+  return value
+    .split(/[_\s]+/)
+    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
+    .join(' ');
+}
+
 export interface RestaurantCardProps {
-  restaurant: NearbyRestaurant;
+  restaurant: PlaceBasicInfo;
   onBookmark?: (restaurantId: string) => void;
   isBookmarked?: boolean;
 }
@@ -44,6 +68,15 @@ export function RestaurantCard({
 }: RestaurantCardProps): JSX.Element {
   const lastReview = formatRelativeReview(restaurant.lastReviewAt);
   const queueMinutes = restaurant.queueEstimateMinutes ?? 10;
+  const ratingValue = restaurant.rating ?? restaurant.average_rating;
+  const reviewCount = restaurant.reviewCount ?? restaurant.review_count;
+  const distanceLabel = restaurant.distance ?? formatDistance(restaurant.distance_meters);
+  const cuisineLabel = formatCuisine(restaurant.cuisine);
+  const areaLabel = restaurant.area ?? restaurant.address;
+  const etaMinutes = restaurant.etaMinutes;
+  const primaryImage = restaurant.imageUrl ?? restaurant.first_image?.image_url;
+  const imageCount = restaurant.image_count ?? (primaryImage ? 1 : undefined);
+  const tags = restaurant.tags ?? (cuisineLabel ? [cuisineLabel] : []);
 
   const handleBookmark = () => {
     onBookmark?.(restaurant.id);
@@ -52,12 +85,23 @@ export function RestaurantCard({
   return (
     <Card className="group overflow-hidden rounded-3xl border border-border/50 bg-white/90 shadow-md shadow-primary/5 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-within:-translate-y-0.5 focus-within:shadow-xl">
       <div className="relative h-40 w-full overflow-hidden sm:h-48">
-        <img
-          src={restaurant.imageUrl}
-          alt={restaurant.name}
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-          loading="lazy"
-        />
+        {primaryImage ? (
+          <img
+            src={primaryImage}
+            alt={restaurant.name}
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+            loading="lazy"
+          />
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-muted text-muted-foreground">
+            <MapPin className="size-6" />
+          </div>
+        )}
+        {imageCount && imageCount > 1 ? (
+          <div className="absolute bottom-3 left-3 rounded-full bg-black/65 px-3 py-0.5 text-xs font-medium text-white">
+            +{imageCount - 1}
+          </div>
+        ) : null}
         <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-black/40 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
         <div className="absolute left-3 top-3 flex gap-2">
           {restaurant.isNew ? (
@@ -91,34 +135,48 @@ export function RestaurantCard({
           <span className="max-w-[70%] truncate font-semibold">
             {restaurant.name}
             <span className="block text-xs font-normal uppercase tracking-wide text-muted-foreground">
-              {restaurant.area}
+              {areaLabel ?? 'Nearby'}
             </span>
           </span>
-          <Badge
-            variant="outline"
-            className="inline-flex items-center gap-1 rounded-full border-primary/20 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
-          >
-            <Star className="size-3.5 fill-current" />
-            {restaurant.rating.toFixed(1)}
-          </Badge>
+          {ratingValue !== undefined ? (
+            <Badge
+              variant="outline"
+              className="inline-flex items-center gap-1 rounded-full border-primary/20 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
+            >
+              <Star className="size-3.5 fill-current" />
+              {ratingValue.toFixed(1)}
+            </Badge>
+          ) : null}
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground">
-          {restaurant.cuisine} · {restaurant.priceRange} · {restaurant.reviewCount.toLocaleString()}{' '}
-          reviews
+          {[cuisineLabel, restaurant.priceRange, reviewCount ? `${reviewCount.toLocaleString()} reviews` : null]
+            .filter(Boolean)
+            .join(' · ')}
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-3 px-5 sm:px-6">
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <span className="inline-flex items-center gap-1.5">
-            <MapPin className="size-4 text-primary" />
-            {restaurant.distance}
-          </span>
-          <Separator orientation="vertical" className="h-4 bg-border/60" />
-          <span className="inline-flex items-center gap-1.5">
-            <Clock className="size-4 text-primary" />
-            {restaurant.etaMinutes} min · Queue {queueMinutes}m
-          </span>
+          {distanceLabel ? (
+            <span className="inline-flex items-center gap-1.5">
+              <MapPin className="size-4 text-primary" />
+              {distanceLabel}
+            </span>
+          ) : null}
+          {(distanceLabel && (etaMinutes || queueMinutes)) ? (
+            <Separator orientation="vertical" className="h-4 bg-border/60" />
+          ) : null}
+          {etaMinutes ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="size-4 text-primary" />
+              {etaMinutes} min · Queue {queueMinutes}m
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5">
+              <Clock className="size-4 text-primary" />
+              Queue {queueMinutes}m
+            </span>
+          )}
           {lastReview ? (
             <>
               <Separator orientation="vertical" className="h-4 bg-border/60" />
@@ -128,17 +186,19 @@ export function RestaurantCard({
             </>
           ) : null}
         </div>
-        <div className="flex flex-wrap gap-2">
-          {restaurant.tags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
-            >
-              {tag}
-            </Badge>
-          ))}
-        </div>
+        {tags.length ? (
+          <div className="flex flex-wrap gap-2">
+            {tags.map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
         {restaurant.dietaryTags?.length ? (
           <div className="flex flex-wrap gap-2">
             {restaurant.dietaryTags.map((tag) => (

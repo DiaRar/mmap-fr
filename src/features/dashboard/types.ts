@@ -13,26 +13,6 @@ export type DietaryTag =
   | 'Nut-free'
   | 'Low-carb';
 
-export interface NearbyRestaurant {
-  id: string;
-  name: string;
-  cuisine: string;
-  rating: number;
-  reviewCount: number;
-  priceRange: string;
-  distance: string;
-  etaMinutes: number;
-  imageUrl: string;
-  tags: string[];
-  area: string;
-  coordinates: GeoPoint;
-  dietaryTags?: DietaryTag[];
-  lastReviewAt?: string;
-  queueEstimateMinutes?: number;
-  isNew?: boolean;
-  isPopular?: boolean;
-}
-
 export interface MealRecommendation {
   id: string;
   restaurantId: string;
@@ -96,6 +76,8 @@ export interface Page<T> {
   total_pages: number;
   current_page: number;
   current_page_size: number;
+  start_index?: number;
+  end_index?: number;
 }
 
 export interface BackendImageResponse {
@@ -107,10 +89,31 @@ export interface BackendImageResponse {
 export interface PlaceBasicInfo {
   id: string;
   name: string;
-  address: string;
   latitude: number;
   longitude: number;
+  address?: string;
+  image_count?: number;
   first_image?: BackendImageResponse;
+  distance_meters?: number;
+  average_rating?: number;
+  review_count?: number;
+  cuisine?: string;
+  test_id?: string;
+  // Frontend-only enriched data (from mocks or future endpoints)
+  rating?: number;
+  reviewCount?: number;
+  priceRange?: string;
+  distance?: string;
+  etaMinutes?: number;
+  imageUrl?: string;
+  tags?: string[];
+  area?: string;
+  coordinates?: GeoPoint;
+  dietaryTags?: DietaryTag[];
+  lastReviewAt?: string;
+  queueEstimateMinutes?: number;
+  isNew?: boolean;
+  isPopular?: boolean;
 }
 
 export interface UserBasicInfo {

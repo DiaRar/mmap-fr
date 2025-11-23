@@ -9,9 +9,9 @@ import { Card, CardContent } from '@/components/ui/card';
 
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
-import { useReviews } from '../api';
+import { usePlaces } from '../api';
 import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
-import { FeedList } from '../components/FeedList';
+import { RestaurantList } from '../components/RestaurantList';
 import { RestaurantSearch } from '../components/RestaurantSearch';
 
 const quickInsights = [
@@ -29,7 +29,7 @@ export function FeedPage(): JSX.Element {
   const setSearchTerm = useMealmapStore((state) => state.setSearchTerm);
   const bookmarkedIds = useMealmapStore((state) => state.bookmarkedIds);
   
-  const { data: reviewsPage, isPending } = useReviews({
+  const { data: placesPage, isPending } = usePlaces({
     searchTerm: searchTerm,
     // radius_m: 5000 // Optional: limit to 5km if location available
   });
@@ -98,7 +98,7 @@ export function FeedPage(): JSX.Element {
                 <Spinner />
               </div>
             ) : (
-              <FeedList reviews={reviewsPage?.results || []} />
+              <RestaurantList restaurants={placesPage?.results || []} />
             )}
           </div>
           <Separator className="bg-border/60 lg:hidden" />
