@@ -1,5 +1,10 @@
 import type { JSX } from 'react';
 import { MapPin, Navigation, Sparkles, Clock } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
@@ -13,25 +18,185 @@ import { restaurantBounds, useRestaurantsQuery } from '@/features/dashboard/data
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import type { PlaceBasicInfo } from '@/features/dashboard/types';
 
-const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
+const LABEL_MAX_W_CLASS = 'max-w-[160px]';
+const LABEL_TOP_CLASS = '-top-6';
+const MARKER_SIZE_CLASS = 'w-14 h-14';
+const PIN_SVG_SIZE = 20;
+const MIN_FIT_ZOOM = 12;
 
-const getMarkerPosition = (restaurant: PlaceBasicInfo) => {
-  const latRange = Math.max(restaurantBounds.maxLat - restaurantBounds.minLat, 0.005);
-  const lngRange = Math.max(restaurantBounds.maxLng - restaurantBounds.minLng, 0.005);
+export function truncate(s?: string, n = 30) {
+  if (!s) return '';
+  return s.length > n ? `${s.slice(0, n - 3)}...` : s;
+}
 
-  const lat = restaurant.coordinates?.lat ?? restaurant.latitude;
-  const lng = restaurant.coordinates?.lng ?? restaurant.longitude;
+const _reverseGeocodeCache = new Map<string, string | null>();
+async function reverseGeocodeRoad(lat: number, lon: number): Promise<string | null> {
+  const key = `${lat.toFixed(6)},${lon.toFixed(6)}`;
+  if (_reverseGeocodeCache.has(key)) return _reverseGeocodeCache.get(key) ?? null;
 
-  const x =
-    ((lng - restaurantBounds.minLng) / lngRange) * 100;
-  const y =
-    ((restaurantBounds.maxLat - lat) / latRange) * 100;
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(
+      String(lat)
+    )}&lon=${encodeURIComponent(String(lon))}&addressdetails=1`;
+    const res = await fetch(url, { headers: { 'Accept-Language': 'en' } });
+    if (!res.ok) {
+      _reverseGeocodeCache.set(key, null);
+      return null;
+    }
+    const data = await res.json();
+    const addr = data?.address ?? {};
+    // prefer road, pedestrian, footway, avenue, street, etc.
+    const road = addr.road || addr.pedestrian || addr.footway || addr.cycleway || addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || null;
+    _reverseGeocodeCache.set(key, road);
+    return road;
+  } catch (e) {
+    _reverseGeocodeCache.set(key, null);
+    return null;
+  }
+}
 
-  return {
-    x: clamp(x, 5, 95),
-    y: clamp(y, 8, 92),
-  };
-};
+function SetUserLocation({
+  fallback = [(restaurantBounds.maxLat + restaurantBounds.minLat) / 2, (restaurantBounds.maxLng + restaurantBounds.minLng) / 2] as [number, number],
+  onFound,
+}: {
+  fallback?: [number, number];
+  onFound?: (latlng: [number, number]) => void;
+}): JSX.Element | null {
+  const map = useMap();
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (initialized.current) return;
+
+    if (!navigator.geolocation) {
+      map.setView(fallback, 13);
+      initialized.current = true;
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        if (initialized.current) return;
+        const center: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        map.setView(center);
+        initialized.current = true;
+        onFound?.(center);
+      },
+      () => {
+        if (initialized.current) return;
+        map.setView(fallback, 13);
+        initialized.current = true;
+      }
+    );
+  }, [map, fallback, onFound]);
+  return null;
+}
+
+// Renders markers that change size or hide depending on zoom level
+function ZoomResponsiveMarkers({
+  restaurants,
+  selectedRestaurantId,
+  selectRestaurant,
+  hideBelow = 11,
+  smallBelow = 13,
+}: {
+  restaurants: PlaceBasicInfo[];
+  selectedRestaurantId?: string | number | null;
+  selectRestaurant: (id?: any) => void;
+  hideBelow?: number;
+  smallBelow?: number;
+}): JSX.Element | null {
+  const map = useMap();
+  const [zoom, setZoom] = useState<number>(() => map.getZoom?.() ?? 0);
+
+  useEffect(() => {
+    const onZoom = () => setZoom(map.getZoom());
+    map.on('zoomend', onZoom);
+    return () => { map.off('zoomend', onZoom); };
+  }, [map]);
+
+  if (!restaurants || restaurants.length === 0) return null;
+
+  // If the zoom is below hideBelow, don't render any markers
+  if (zoom < hideBelow) return null;
+
+  const isSmall = zoom < smallBelow;
+
+  return (
+    <>
+      {restaurants.map((restaurant) => {
+        const lat = restaurant.coordinates?.lat ?? restaurant.latitude;
+        const lng = restaurant.coordinates?.lng ?? restaurant.longitude;
+        const isActive = restaurant.id === selectedRestaurantId;
+
+        const pinSize = isSmall ? Math.max(12, Math.floor(PIN_SVG_SIZE * 0.7)) : PIN_SVG_SIZE;
+        const markerSizeClass = isSmall ? 'w-10 h-10' : MARKER_SIZE_CLASS;
+        const labelMaxWClass = isSmall ? 'max-w-[100px]' : LABEL_MAX_W_CLASS;
+
+        const pinSvg = renderToStaticMarkup(<MapPin size={pinSize} />);
+
+        const html = `
+          <div class="group">
+            <div class="group relative inline-flex flex-col items-center">
+              <div class="absolute ${LABEL_TOP_CLASS} left-1/2 -translate-x-1/2">
+                <div class="flex items-center gap-2 rounded-full border border-border/40 bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow backdrop-blur whitespace-nowrap overflow-hidden">
+                  <span class="inline-block ${labelMaxWClass} truncate">${restaurant.name ?? 'Nearby'}</span>
+                  <span class="ml-1 flex-shrink-0">${(restaurant.rating ?? restaurant.average_rating ?? 0).toFixed(1)}</span>
+                </div>
+              </div>
+              <div class="mt-2 flex ${markerSizeClass} items-center justify-center rounded-full border-2 shadow ${isActive ? 'border-primary bg-primary text-primary-foreground' : 'border-white/70 bg-white text-primary'}">
+                ${pinSvg}
+              </div>
+            </div>
+          </div>
+        `;
+
+        const icon = L.divIcon({ className: 'custom-div-icon', html, iconSize: [isSmall ? 56 : 80, isSmall ? 56 : 80], iconAnchor: [isSmall ? 28 : 40, isSmall ? 28 : 40] });
+
+        return (
+          <Marker key={restaurant.id} position={[lat, lng]} icon={icon} eventHandlers={{ click: () => selectRestaurant(restaurant.id) }} />
+        );
+      })}
+    </>
+  );
+}
+
+function FitBounds({restaurants, userLocation}: { restaurants: PlaceBasicInfo[], userLocation?: [number, number] | null }) : JSX.Element | null {
+  const map = useMap();
+
+  useEffect(() => {
+    if ((!restaurants || restaurants.length === 0) && userLocation) {
+      map.setView(userLocation, MIN_FIT_ZOOM);
+      const t = setTimeout(() => map.invalidateSize(), 0);
+      return () => clearTimeout(t);
+    }
+
+    if (!restaurants || restaurants.length === 0) return;
+
+    const bounds = restaurants
+      .map((r) => [r.coordinates?.lat ?? r.latitude, r.coordinates?.lng ?? r.longitude]) as [number, number][];
+
+    if (userLocation) bounds.push(userLocation);
+
+    try {
+      const targetZoom = map.getBoundsZoom(bounds as any, false);
+      if (typeof targetZoom === 'number' && targetZoom < MIN_FIT_ZOOM) {
+        const centerLat = (restaurantBounds.maxLat + restaurantBounds.minLat) / 2;
+        const centerLng = (restaurantBounds.maxLng + restaurantBounds.minLng) / 2;
+        map.setView([centerLat, centerLng], MIN_FIT_ZOOM);
+      } else {
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    const t = setTimeout(() => map.invalidateSize(), 0);
+    return () => clearTimeout(t);
+  }, [map, restaurants, userLocation]);
+
+  return null;
+}
 
 function formatRelativeReview(date?: string) {
   if (!date) {
@@ -50,12 +215,30 @@ function formatRelativeReview(date?: string) {
 
 export function MapPage(): JSX.Element {
   const { data: restaurants = [], isPending } = useRestaurantsQuery();
+  const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const selectedRestaurantId = useMealmapStore((state) => state.selectedRestaurantId);
+  const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
   const selectRestaurant = useMealmapStore((state) => state.selectRestaurant);
   const navigate = useNavigate();
 
   const selectedRestaurant =
     restaurants.find((restaurant) => restaurant.id === selectedRestaurantId) ?? restaurants[0];
+
+  useEffect(() => {
+    let mounted = true;
+    setSelectedRoad(null);
+    if (!selectedRestaurant) return;
+    const lat = selectedRestaurant.coordinates?.lat ?? selectedRestaurant.latitude;
+    const lng = selectedRestaurant.coordinates?.lng ?? selectedRestaurant.longitude;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+    reverseGeocodeRoad(lat, lng).then((road) => {
+      if (!mounted) return;
+      setSelectedRoad(road);
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [selectedRestaurant]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -93,41 +276,43 @@ export function MapPage(): JSX.Element {
                 <Spinner />
               </div>
             ) : (
-              restaurants.map((restaurant) => {
-                const position = getMarkerPosition(restaurant);
-                const isActive = restaurant.id === selectedRestaurant?.id;
-                return (
-                  <button
-                    key={restaurant.id}
-                    type="button"
-                    className="group absolute -translate-x-1/2 -translate-y-full focus-visible:outline-none"
-                    style={{
-                      left: `${position.x}%`,
-                      top: `${position.y}%`,
-                    }}
-                    onClick={() => selectRestaurant(restaurant.id)}
-                    aria-label={`View ${restaurant.name} details on map`}
-                  >
-                    <div
-                      className="flex items-center gap-2 rounded-full border border-border/40 bg-background/90 px-3 py-1 text-xs font-semibold text-foreground shadow backdrop-blur"
-                      aria-hidden="true"
-                    >
-                      <span className="inline-flex items-center gap-1 text-primary">
-                        <MapPin className="size-3.5" />
-                        {restaurant.area ?? 'Nearby'}
-                      </span>
-                      <span>
-                        {(restaurant.rating ?? restaurant.average_rating ?? 0).toFixed(1)}
-                      </span>
-                    </div>
-                    <div
-                      className={`mx-auto mt-2 flex size-11 items-center justify-center rounded-full border-2 shadow transition ${isActive ? 'border-primary bg-primary text-primary-foreground shadow-primary/40' : 'border-white/70 bg-white text-primary shadow-primary/10'}`}
-                    >
-                      <MapPin className="size-5" />
-                    </div>
-                  </button>
-                );
-              })
+              <MapContainer
+                center={[
+                  (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
+                  (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
+                ]}
+                zoom={13}
+                className="w-full h-full"
+                style={{ borderRadius: '1rem' }}
+              >
+                <SetUserLocation fallback={[(restaurantBounds.maxLat + restaurantBounds.minLat) / 2, (restaurantBounds.maxLng + restaurantBounds.minLng) / 2]} onFound={(latlng) => setUserLocation((prev) => prev ?? latlng)} />
+                <TileLayer
+                  url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                  attribution={'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'}
+                  subdomains={['a', 'b', 'c', 'd']}
+                  maxZoom={19}
+                />
+                <FitBounds restaurants={restaurants} userLocation={userLocation} />
+
+                <ZoomResponsiveMarkers
+                  restaurants={restaurants}
+                  selectedRestaurantId={selectedRestaurant?.id}
+                  selectRestaurant={selectRestaurant}
+                  hideBelow={13}
+                  smallBelow={16}
+                />
+                {userLocation && (
+                  <Marker
+                    position={userLocation}
+                    icon={L.divIcon({
+                      className: 'user-location-icon',
+                      html: '<div class="w-6 h-6 rounded-full bg-primary border-2 border-white shadow" />',
+                      iconSize: [24, 24],
+                      iconAnchor: [12, 12],
+                    })}
+                  />
+                )}
+              </MapContainer>
             )}
           </div>
 
@@ -161,12 +346,19 @@ export function MapPage(): JSX.Element {
                 <>
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
+                      <MapPin className="size-5" />
+                      {selectedRestaurant.area ?? 'Address not available'}
+                      {selectedRoad ? `, ${selectedRoad}` : ''}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
                       <Navigation className="size-4 text-primary" />
                       {selectedRestaurant.etaMinutes ?? '—'} min walk
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="size-4 text-primary" />
-                      Queue {selectedRestaurant.queueEstimateMinutes ?? 10} min
+                      Wait time: {selectedRestaurant.queueEstimateMinutes ?? 10} min
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Sparkles className="size-4 text-primary" />

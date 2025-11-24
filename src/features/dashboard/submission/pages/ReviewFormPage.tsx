@@ -55,6 +55,10 @@ const reviewFormSchema = z
     price: z
       .number({ invalid_type_error: 'Share the price (₩1,000+).' })
       .optional(),
+    queueEstimateMinutes: z
+      .number({ required_error: 'Show how long you waited for your meal.', invalid_type_error: 'Share the wait time in minutes.' })
+      .int()
+      .min(0, 'Wait time must be 0 or more minutes.'),
     currency: z
       .enum(CURRENCIES, {
         message: 'Select a currency.',
@@ -97,6 +101,7 @@ type ReviewFormValues = {
   mealId?: string;
   mealName: string;
   price?: number;
+  queueEstimateMinutes: number;
   currency?: CurrencyOption;
   rating: number;
   dietaryTags: DietaryTag[];
@@ -134,6 +139,7 @@ export function ReviewFormPage(): JSX.Element {
       mealId: undefined,
       mealName: '',
       price: 12000,
+      queueEstimateMinutes: undefined,
       currency: '₩',
       rating: 4,
       dietaryTags: [],
@@ -282,6 +288,7 @@ export function ReviewFormPage(): JSX.Element {
         rating: values.rating,
         text: values.review,
         price: values.price,
+        waiting_time_minutes: values.queueEstimateMinutes,
         images: values.photo ? [values.photo] : [],
         is_vegan: values.dietaryTags.includes('Vegan') ? 'yes' : 'no',
         is_halal: values.dietaryTags.includes('Halal') ? 'yes' : 'no',
@@ -469,6 +476,47 @@ export function ReviewFormPage(): JSX.Element {
                 onChange={handleRatingChange}
                 error={form.formState.errors.rating?.message}
               />
+
+              <Field>
+                <FieldLabel>
+                  <FieldTitle>Wait time (minutes)</FieldTitle>
+                  <FieldDescription>Approximate queue / wait time in minutes.</FieldDescription>
+                </FieldLabel>
+                <FieldContent>
+                  <Controller
+                    name="queueEstimateMinutes"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Input
+                        type="number"
+                        inputMode="numeric"
+                        min={0}
+                        step={1}
+                        placeholder="e.g. 15"
+                        value={field.value ?? ''}
+                        onChange={(event) => {
+                          const nextValue = event.target.value;
+                          if (nextValue === '') {
+                            field.onChange(undefined);
+                            return;
+                          }
+                          const parsed = Number(nextValue);
+                          if (!Number.isNaN(parsed)) {
+                            field.onChange(parsed);
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                  <FieldError
+                    errors={
+                      form.formState.errors.queueEstimateMinutes
+                        ? [{ message: form.formState.errors.queueEstimateMinutes.message }]
+                        : undefined
+                    }
+                  />
+                </FieldContent>
+              </Field>
 
               <Field>
                 <FieldLabel>

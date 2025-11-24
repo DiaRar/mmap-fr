@@ -463,7 +463,7 @@ export function MealDetailsPage(): JSX.Element {
                 <CardHeader>
                   <CardTitle className="text-base">Wait-time history</CardTitle>
                   <CardDescription>
-                    Community-reported queue times so you can plan ahead.
+                    Community-reported wait times so you can plan ahead.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
