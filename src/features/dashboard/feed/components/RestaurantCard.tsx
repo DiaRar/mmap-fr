@@ -89,7 +89,7 @@ export function RestaurantCard({
   };
 
   return (
-    <Card className="group overflow-hidden rounded-3xl border border-border/50 bg-white/90 shadow-md shadow-primary/5 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-within:-translate-y-0.5 focus-within:shadow-xl">
+    <Card className="group w-full max-w-full overflow-hidden rounded-3xl border border-border/50 bg-white/90 shadow-md shadow-primary/5 backdrop-blur transition duration-300 hover:-translate-y-0.5 hover:shadow-xl focus-within:-translate-y-0.5 focus-within:shadow-xl">
       <div className="relative h-40 w-full overflow-hidden sm:h-48">
         {primaryImage ? (
           <img
@@ -136,9 +136,9 @@ export function RestaurantCard({
         </Button>
       </div>
 
-      <CardHeader className="space-y-1 px-5 pb-2 sm:px-6">
-        <CardTitle className="flex items-start justify-between text-lg tracking-tight text-foreground">
-          <span className="max-w-[70%] truncate font-semibold">
+      <CardHeader className="min-w-0 space-y-1 px-5 pb-2 sm:px-6">
+        <CardTitle className="flex items-start justify-between gap-2 text-lg tracking-tight text-foreground">
+          <span className="max-w-[70%] truncate font-semibold leading-tight">
             {restaurant.name}
             <span className="block text-xs font-normal uppercase tracking-wide text-muted-foreground">
               {areaLabel ?? 'Nearby'}
@@ -154,14 +154,14 @@ export function RestaurantCard({
             </Badge>
           ) : null}
         </CardTitle>
-        <CardDescription className="text-sm text-muted-foreground">
+        <CardDescription className="line-clamp-2 text-sm text-muted-foreground">
           {[cuisineLabel, restaurant.priceRange, reviewCount ? `${reviewCount.toLocaleString()} reviews` : null]
             .filter(Boolean)
             .join(' · ')}
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="space-y-3 px-5 sm:px-6">
+      <CardContent className="min-w-0 space-y-3 px-5 sm:px-6">
         <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
           {distanceLabel ? (
             <span className="inline-flex items-center gap-1.5">
@@ -198,7 +198,7 @@ export function RestaurantCard({
               <Badge
                 key={tag}
                 variant="outline"
-                className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary"
+                className="max-w-full flex-wrap rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-medium text-primary whitespace-normal break-words"
               >
                 {tag}
               </Badge>
@@ -211,7 +211,7 @@ export function RestaurantCard({
               <Badge
                 key={tag}
                 variant="secondary"
-                className="rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold text-emerald-800"
+                className="max-w-full flex-wrap rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold text-emerald-800 whitespace-normal break-words"
               >
                 {tag}
               </Badge>
@@ -220,9 +220,9 @@ export function RestaurantCard({
         ) : null}
       </CardContent>
 
-      <CardFooter className="justify-between px-5 pb-5 pt-0 sm:px-6">
-        <div className="text-sm text-muted-foreground">
-          <p>“Everything here feels curated with care.”</p>
+      <CardFooter className="min-w-0 justify-between gap-3 px-5 pb-5 pt-0 sm:px-6">
+        <div className="flex-1 text-sm text-muted-foreground">
+          <p className="line-clamp-2 break-words">“Everything here feels curated with care.”</p>
           <p className="text-xs">Latest review {lastReview ?? 'pending'}</p>
         </div>
         <Button
