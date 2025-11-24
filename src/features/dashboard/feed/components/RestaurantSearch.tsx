@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
 import { motion } from 'motion/react';
-import { Filter, Loader2, MapPin, Search } from 'lucide-react';
+import { Filter, Loader2, MapPin, Search, LocateFixed } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -277,11 +277,12 @@ export function RestaurantSearch({
               <Button
                 type="button"
                 variant="outline"
-                size="sm"
-                className="rounded-full border-border/60 bg-white text-xs font-medium text-muted-foreground"
+                size="icon"
+                className="rounded-full border-border/60 bg-white text-muted-foreground"
                 onClick={() => setIsDialogOpen(true)}
+                aria-label="Set location manually"
               >
-                Set location
+                <LocateFixed className="size-4" />
               </Button>
               <Button
                 variant="outline"
