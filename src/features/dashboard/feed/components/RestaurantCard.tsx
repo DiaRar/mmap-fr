@@ -16,6 +16,8 @@ import { Link } from 'react-router-dom';
 
 import type { PlaceBasicInfo } from '../../types';
 
+const MAX_TITLE_LENGTH = 30;
+
 function formatRelativeReview(date?: string): string | null {
   if (!date) {
     return null;
@@ -139,7 +141,7 @@ export function RestaurantCard({
       <CardHeader className="min-w-0 space-y-1 px-5 pb-2 sm:px-6">
         <CardTitle className="flex items-start justify-between gap-2 text-lg tracking-tight text-foreground">
           <span className="max-w-[70%] truncate font-semibold leading-tight">
-            {restaurant.name}
+            {truncateTitle(restaurant.name)}
             <span className="block text-xs font-normal uppercase tracking-wide text-muted-foreground">
               {areaLabel ?? 'Nearby'}
             </span>
@@ -238,4 +240,11 @@ export function RestaurantCard({
       </CardFooter>
     </Card>
   );
+}
+
+function truncateTitle(value: string, maxLength = MAX_TITLE_LENGTH): string {
+  if (value.length <= maxLength) {
+    return value;
+  }
+  return `${value.slice(0, maxLength - 3).trimEnd()}...`;
 }
