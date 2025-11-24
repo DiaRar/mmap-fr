@@ -20,6 +20,11 @@ interface MealmapState {
   addPoints: (points: number) => void;
   userLocation: GeoPoint | null;
   setUserLocation: (location: GeoPoint | null) => void;
+  locationLabel: string | null;
+  locationLabelCoords: GeoPoint | null;
+  setLocationLabel: (label: string | null, coords?: GeoPoint | null) => void;
+  swipeSessionId: string | null;
+  setSwipeSessionId: (sessionId: string) => void;
 }
 
 export const useMealmapStore = create<MealmapState>((set) => ({
@@ -55,4 +60,13 @@ export const useMealmapStore = create<MealmapState>((set) => ({
     })),
   userLocation: null,
   setUserLocation: (location) => set({ userLocation: location }),
+  locationLabel: null,
+  locationLabelCoords: null,
+  setLocationLabel: (label, coords) =>
+    set({
+      locationLabel: label,
+      locationLabelCoords: coords ?? null,
+    }),
+  swipeSessionId: null,
+  setSwipeSessionId: (sessionId) => set({ swipeSessionId: sessionId }),
 }));

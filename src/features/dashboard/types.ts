@@ -16,15 +16,16 @@ export type DietaryTag =
 export interface MealRecommendation {
   id: string;
   restaurantId: string;
+  restaurantName?: string;
   title: string;
-  highlight: string;
-  description: string;
-  distance: string;
-  matchScore: number;
-  rating: number;
-  price: string;
+  highlight?: string;
+  description?: string;
+  distance?: string;
+  matchScore?: number;
+  rating?: number | null;
+  price?: string;
   tags: string[];
-  imageUrl: string;
+  imageUrl?: string;
   calories?: number;
   mood?: string;
   is_vegan?: 'yes' | 'no' | 'unspecified';
