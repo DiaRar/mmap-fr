@@ -1,8 +1,9 @@
-import { useState, useCallback, type JSX } from 'react';
+import { useState, useCallback, useEffect, type JSX } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { Heart, RotateCcw, X, Info, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDrag } from '@use-gesture/react';
+import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -13,36 +14,120 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Spinner } from '@/components/ui/spinner';
-import { useRecommendationsQuery, useRestaurantById } from '@/features/dashboard/data/hooks';
+import { fetchRecommendations, useRecommendationsQuery, useRestaurantById } from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { RecommendationCard } from '@/features/dashboard/recommendations/components/RecommendationCard';
-import type { RecommendationResponse } from '@/features/dashboard/types';
+import { useCreateSwipeMutation } from '@/features/dashboard/recommendations/api';
+import type { MealRecommendation, RecommendationResponse } from '@/features/dashboard/types';
+
+const RECOMMENDATION_BATCH_SIZE = 5;
+
+const generateSessionId = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return Math.random().toString(36).slice(2);
+};
 
 export function RecommendationsPage(): JSX.Element {
   const navigate = useNavigate();
-  const { data: recommendations = [], isPending } = useRecommendationsQuery();
+  const {
+    data: initialBatch = [],
+    isPending,
+    error,
+    refetch,
+  } = useRecommendationsQuery({ limit: RECOMMENDATION_BATCH_SIZE });
+  const [recommendations, setRecommendations] = useState<MealRecommendation[]>(initialBatch);
   const [activeIndex, setActiveIndex] = useState(0);
   const [swipeIntent, setSwipeIntent] = useState<RecommendationResponse | null>(null);
+  const [isPrefetching, setIsPrefetching] = useState(false);
+  const [remoteExhausted, setRemoteExhausted] = useState(false);
+
+  useEffect(() => {
+    if (recommendations.length === 0 && initialBatch.length > 0) {
+      setRecommendations(initialBatch);
+    }
+  }, [initialBatch, recommendations.length]);
 
   const markRecommendation = useMealmapStore((state) => state.markRecommendation);
   const feedback = useMealmapStore((state) => state.recommendationFeedback);
+  const swipeSessionId = useMealmapStore((state) => state.swipeSessionId);
+  const setSwipeSessionId = useMealmapStore((state) => state.setSwipeSessionId);
+
+  useEffect(() => {
+    if (!swipeSessionId && recommendations.length > 0) {
+      setSwipeSessionId(generateSessionId());
+    }
+  }, [swipeSessionId, recommendations.length, setSwipeSessionId]);
+
+  const swipeMutation = useCreateSwipeMutation();
+
+  const resolveSessionId = useCallback(() => {
+    if (swipeSessionId) {
+      return swipeSessionId;
+    }
+    const newSessionId = generateSessionId();
+    setSwipeSessionId(newSessionId);
+    return newSessionId;
+  }, [swipeSessionId, setSwipeSessionId]);
+
+  const fetchNextBatch = useCallback(async () => {
+    if (isPrefetching || remoteExhausted) {
+      return;
+    }
+
+    setIsPrefetching(true);
+    try {
+      const nextBatch = await fetchRecommendations({ limit: RECOMMENDATION_BATCH_SIZE });
+      if (nextBatch.length === 0) {
+        setRemoteExhausted(true);
+        return;
+      }
+
+      setRecommendations((prev) => {
+        const existingIds = new Set(prev.map((rec) => rec.id));
+        const additions = nextBatch.filter((rec) => !existingIds.has(rec.id));
+        if (additions.length === 0) {
+          return prev;
+        }
+        return [...prev, ...additions];
+      });
+    } catch {
+      toast.error('Unable to load more recommendations right now.');
+    } finally {
+      setIsPrefetching(false);
+    }
+  }, [isPrefetching, remoteExhausted]);
+
+  useEffect(() => {
+    if (!recommendations.length || remoteExhausted) {
+      return;
+    }
+    const remaining = recommendations.length - activeIndex;
+    if (remaining <= 2) {
+      void fetchNextBatch();
+    }
+  }, [recommendations.length, activeIndex, fetchNextBatch, remoteExhausted]);
 
   // Active Card Data
   const activeRecommendation = recommendations[activeIndex];
   const activeRestaurant = useRestaurantById(activeRecommendation?.restaurantId);
-  const activeRestaurantName = activeRestaurant?.name ?? activeRecommendation?.restaurantId;
+  const activeRestaurantName =
+    activeRecommendation?.restaurantName ??
+    activeRestaurant?.name ??
+    activeRecommendation?.restaurantId ??
+    'Loading...';
 
   // Next Card Data (for background stack)
   const nextRecommendation = recommendations[activeIndex + 1];
   // We don't fetch restaurant for next card to save resources, 
   // it will load when it becomes active.
-  const nextRestaurantName = nextRecommendation?.restaurantId; 
+  const nextRestaurantName =
+    nextRecommendation?.restaurantName ?? nextRecommendation?.restaurantId ?? 'Loading...';
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-12, 0, 12]);
   const opacity = useTransform(x, [-220, 0, 220], [0.8, 1, 0.8]); // Fade out slightly on extreme swipe
-
-  const activeRecommendationId = activeRecommendation?.id;
 
   const settleCard = useCallback(
     (direction?: RecommendationResponse) => {
@@ -52,17 +137,33 @@ export function RecommendationsPage(): JSX.Element {
         return;
       }
 
+      if (!activeRecommendation) {
+        setSwipeIntent(null);
+        return;
+      }
+
       const target = direction === 'liked' ? 500 : -500;
       animate(x, target, { duration: 0.25, ease: 'easeInOut' }).then(() => {
         x.set(0);
         setSwipeIntent(null);
-        if (!activeRecommendationId) return;
-        
-        markRecommendation(activeRecommendationId, direction);
+        markRecommendation(activeRecommendation.id, direction);
+        const sessionId = resolveSessionId();
+        swipeMutation.mutate(
+          {
+            meal_id: activeRecommendation.id,
+            liked: direction === 'liked',
+            session_id: sessionId,
+          },
+          {
+            onError: () => {
+              toast.error('Failed to send your swipe. Please try again.');
+            },
+          }
+        );
         setActiveIndex((prev) => prev + 1);
       });
     },
-    [activeRecommendationId, markRecommendation, x]
+    [activeRecommendation, markRecommendation, resolveSessionId, swipeMutation, x]
   );
 
   const bind = useDrag(
@@ -91,12 +192,12 @@ export function RecommendationsPage(): JSX.Element {
   const dragBindings = bind() as Record<string, unknown>;
 
   const stats = Object.values(feedback).reduce(
-      (acc, current) => {
-        acc[current] += 1;
-        return acc;
-      },
-      { liked: 0, dismissed: 0 }
-    );
+    (acc, current) => {
+      acc[current] += 1;
+      return acc;
+    },
+    { liked: 0, dismissed: 0 }
+  );
 
   const hasMore = activeIndex < recommendations.length;
 
@@ -113,7 +214,16 @@ export function RecommendationsPage(): JSX.Element {
     });
   }, [activeRecommendation, activeRestaurantName, navigate]);
 
-  if (isPending) {
+  if (error && recommendations.length === 0 && !isPending) {
+    return (
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 p-8 text-center">
+        <p className="text-muted-foreground">Unable to load recommendations.</p>
+        <Button onClick={() => refetch()}>Try again</Button>
+      </div>
+    );
+  }
+
+  if (isPending && recommendations.length === 0) {
     return (
       <div className="flex flex-1 items-center justify-center">
         <Spinner />
@@ -122,7 +232,7 @@ export function RecommendationsPage(): JSX.Element {
   }
 
   if (!hasMore && recommendations.length > 0) {
-  return (
+    return (
       <div className="flex flex-1 flex-col items-center justify-center gap-6 p-8 text-center">
         <div className="rounded-full bg-primary/10 p-6 text-primary">
           <Sparkles className="size-12" />
@@ -137,23 +247,21 @@ export function RecommendationsPage(): JSX.Element {
           <Button variant="outline" onClick={() => setActiveIndex(0)}>
             <RotateCcw className="mr-2 size-4" />
             Start Over
-                </Button>
-          <Button onClick={() => navigate('/map')}>
-            Go to Map
-                </Button>
-                      </div>
-                    </div>
+          </Button>
+          <Button onClick={() => navigate('/map')}>Go to Map</Button>
+        </div>
+      </div>
     );
   }
 
-  if (recommendations.length === 0) {
+  if (!isPending && recommendations.length === 0) {
     return (
       <div className="flex flex-1 flex-col items-center justify-center p-8 text-center">
         <p className="text-muted-foreground">No recommendations found.</p>
         <Button onClick={() => navigate('/')} className="mt-4">
           Explore Feed
         </Button>
-                    </div>
+      </div>
     );
   }
 
@@ -270,6 +378,12 @@ export function RecommendationsPage(): JSX.Element {
             <Heart className="size-6 fill-current" />
           </Button>
         </div>
+        {isPrefetching && (
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <Spinner className="size-3" />
+            Fetching more picks…
+          </div>
+        )}
       </footer>
     </div>
   );

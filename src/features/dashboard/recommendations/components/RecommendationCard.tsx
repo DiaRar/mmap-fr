@@ -28,6 +28,33 @@ export function RecommendationCard({
   swipeIntent,
   isFront = false,
 }: RecommendationCardProps) {
+  const tags = recommendation.tags ?? [];
+  const priceLabel = recommendation.price ?? '—';
+  const descriptionText = recommendation.description ?? 'Tap to learn more.';
+
+  const matchBadge =
+    typeof recommendation.matchScore === 'number'
+      ? (
+          <Badge
+            variant="secondary"
+            className={cn(
+              'ml-auto border-0 backdrop-blur-md',
+              recommendation.matchScore > 80
+                ? 'bg-green-500/80 text-white'
+                : 'bg-black/40 text-white'
+            )}
+          >
+            Match {recommendation.matchScore}%
+          </Badge>
+        )
+      : typeof recommendation.rating === 'number'
+        ? (
+            <Badge className="ml-auto border-0 bg-black/40 text-white backdrop-blur-md" variant="secondary">
+              {recommendation.rating.toFixed(1)}★ avg
+            </Badge>
+          )
+        : null;
+
   return (
     <motion.div
       style={style as MotionStyle}
@@ -40,12 +67,16 @@ export function RecommendationCard({
       <Card className="relative h-full w-full overflow-hidden rounded-3xl border-0 shadow-xl">
         {/* Image Section - Takes up full height with gradient overlay */}
         <div className="absolute inset-0">
-          <img
-            src={recommendation.imageUrl}
-            alt={recommendation.title}
-            className="h-full w-full object-cover"
-            draggable={false}
-          />
+          {recommendation.imageUrl ? (
+            <img
+              src={recommendation.imageUrl}
+              alt={recommendation.title}
+              className="h-full w-full object-cover"
+              draggable={false}
+            />
+          ) : (
+            <div className="h-full w-full bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900" />
+          )}
           {/* Gradient overlays for text readability */}
           <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/90" />
         </div>
@@ -72,19 +103,13 @@ export function RecommendationCard({
         )}
 
         {/* Top Badges */}
-        <div className="absolute left-0 right-0 top-0 flex justify-between p-4 z-10">
-          <Badge variant="secondary" className="bg-black/40 text-white backdrop-blur-md border-0">
-            {recommendation.distance}
-          </Badge>
-          <Badge 
-            variant="secondary" 
-            className={cn(
-              "backdrop-blur-md border-0",
-              recommendation.matchScore > 80 ? "bg-green-500/80 text-white" : "bg-black/40 text-white"
-            )}
-          >
-            Match {recommendation.matchScore}%
-          </Badge>
+        <div className="absolute left-0 right-0 top-0 z-10 flex items-start gap-2 p-4">
+          {recommendation.distance && (
+            <Badge variant="secondary" className="border-0 bg-black/40 text-white backdrop-blur-md">
+              {recommendation.distance}
+            </Badge>
+          )}
+          {matchBadge}
         </div>
 
         {/* Content - Bottom aligned */}
@@ -95,7 +120,7 @@ export function RecommendationCard({
                 {recommendation.title}
               </h2>
               <span className="text-lg font-semibold text-white/90 shadow-black drop-shadow-md">
-                {recommendation.price}
+                {priceLabel}
               </span>
             </div>
             <p className="text-lg font-medium text-white/80 shadow-black drop-shadow-sm">
@@ -104,11 +129,11 @@ export function RecommendationCard({
           </div>
 
           <p className="line-clamp-2 text-sm text-white/90 shadow-black drop-shadow-sm">
-            {recommendation.description}
+            {descriptionText}
           </p>
 
           <div className="flex flex-wrap gap-2 pt-1">
-            {recommendation.tags.slice(0, 3).map((tag) => (
+            {tags.slice(0, 3).map((tag) => (
               <Badge
                 key={tag}
                 variant="outline"
