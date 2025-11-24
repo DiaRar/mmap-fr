@@ -1,8 +1,10 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
+import type { ObjectCreationResponse } from '@/features/dashboard/types';
 
 export interface CreateReviewData {
   place_id: string;
+  meal_id?: string;
   meal_name: string;
   rating: number;
   text?: string;
@@ -26,11 +28,16 @@ export function useCreateReview() {
       const formData = new FormData();
       formData.append('place_id', data.place_id);
       formData.append('meal_name', data.meal_name);
+      if (data.meal_id) {
+        formData.append('meal_id', data.meal_id);
+      }
       formData.append('rating', data.rating.toString());
       
       if (data.text) formData.append('text', data.text);
-      if (data.price) formData.append('price', data.price.toString());
-      if (data.waiting_time_minutes) formData.append('waiting_time_minutes', data.waiting_time_minutes.toString());
+      if (typeof data.price === 'number') formData.append('price', data.price.toString());
+      if (typeof data.waiting_time_minutes === 'number') {
+        formData.append('waiting_time_minutes', data.waiting_time_minutes.toString());
+      }
       
       // Tags
       if (data.is_vegan) formData.append('is_vegan', data.is_vegan);
@@ -47,14 +54,19 @@ export function useCreateReview() {
         });
       }
 
-      return apiRequest('/reviews', {
+      return apiRequest<ObjectCreationResponse>('/reviews', {
         method: 'POST',
         body: formData,
       });
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['reviews'] });
+    onSuccess: (_result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['places'] });
+      if (variables.place_id) {
+        queryClient.invalidateQueries({ queryKey: ['meals', variables.place_id] });
+      }
+      if (variables.meal_id) {
+        queryClient.invalidateQueries({ queryKey: ['reviews', variables.meal_id] });
+      }
     },
   });
 }
-

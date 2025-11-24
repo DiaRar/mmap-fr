@@ -145,3 +145,35 @@ export interface ReviewResponse {
   created_at: string;
   distance_meters?: number;
 }
+
+export interface MealTags {
+  is_vegan?: string | null;
+  is_halal?: string | null;
+  is_vegetarian?: string | null;
+  is_spicy?: string | null;
+  is_gluten_free?: string | null;
+  is_dairy_free?: string | null;
+  is_nut_free?: string | null;
+}
+
+export interface MealResponse {
+  id: string;
+  name: string;
+  place_id: string;
+  place_name: string;
+  price?: number | null;
+  avg_price?: number | null;
+  avg_rating?: number | null;
+  avg_waiting_time?: number | null;
+  review_count: number;
+  first_image?: BackendImageResponse;
+  distance_meters?: number | null;
+  tags?: MealTags;
+  is_new: boolean;
+  is_popular: boolean;
+  test_id?: string | null;
+}
+
+export interface ObjectCreationResponse {
+  id: string;
+}

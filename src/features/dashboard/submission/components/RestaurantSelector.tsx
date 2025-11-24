@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect, type JSX } from 'react';
 import { Check, ChevronsUpDown, Plus, Store } from 'lucide-react';
+import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 
 import { Button } from '@/components/ui/button';
@@ -33,21 +34,9 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-import { usePlaces } from '@/features/dashboard/feed/api';
-
-// Simple debounce hook if not exists
-function useDebouncedValue<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState<T>(value);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedValue(value);
-    }, delay);
-    return () => {
-      clearTimeout(handler);
-    };
-  }, [value, delay]);
-  return debouncedValue;
-}
+import { usePlaces, useCreatePlace } from '@/features/dashboard/feed/api';
+import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
+import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
 
 export interface RestaurantSelectorProps {
   value: string;
@@ -85,6 +74,8 @@ export function RestaurantSelector({
   const [isAddingNew, setIsAddingNew] = useState(false);
   const [newRestaurantName, setNewRestaurantName] = useState('');
   const isMobile = useIsMobile();
+  const userLocation = useMealmapStore((state) => state.userLocation);
+  const { mutateAsync: createPlace, isPending: isCreatingPlace } = useCreatePlace();
 
   // If value is set but we don't have the place in the list (because we searched something else),
   // we still want to show the name. 
@@ -101,17 +92,29 @@ export function RestaurantSelector({
     [onChange]
   );
 
-  const handleAddNew = useCallback(() => {
-    if (newRestaurantName.trim()) {
-      if (onAddNew) {
-        onAddNew(newRestaurantName.trim());
-      }
-      // For new restaurant, we don't have an ID yet.
-      // Backend might require creating it first.
-      // For now passing undefined ID.
-      handleSelect(newRestaurantName.trim(), undefined);
+  const handleAddNew = useCallback(async () => {
+    const trimmedName = newRestaurantName.trim();
+    if (!trimmedName) return;
+
+    if (!userLocation) {
+      toast.error('Share your location before adding a restaurant.');
+      return;
     }
-  }, [newRestaurantName, onAddNew, handleSelect]);
+
+    try {
+      const created = await createPlace({
+        name: trimmedName,
+        latitude: userLocation.lat,
+        longitude: userLocation.lng,
+      });
+      toast.success('Restaurant added');
+      onAddNew?.(trimmedName);
+      handleSelect(trimmedName, created.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to add restaurant';
+      toast.error(message);
+    }
+  }, [createPlace, newRestaurantName, userLocation, onAddNew, handleSelect]);
 
   const CommandContent = (
     <>
@@ -159,11 +162,11 @@ export function RestaurantSelector({
                 <div className="flex gap-2">
                   <Button
                     size="sm"
-                    onClick={handleAddNew}
-                    disabled={!newRestaurantName.trim()}
+                    onClick={() => void handleAddNew()}
+                    disabled={!newRestaurantName.trim() || isCreatingPlace}
                     className="flex-1"
                   >
-                    Add
+                    {isCreatingPlace ? 'Adding...' : 'Add'}
                   </Button>
                   <Button
                     size="sm"

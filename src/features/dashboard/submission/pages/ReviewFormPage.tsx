@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect, type JSX } from 'react';
+import { useCallback, useState, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
@@ -21,8 +21,6 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
-
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import type { DietaryTag } from '@/features/dashboard/types';
 import { PhotoUploadField } from '@/features/dashboard/submission/components/PhotoUploadField';
@@ -31,6 +29,7 @@ import { DietaryTagSelector } from '@/features/dashboard/submission/components/D
 import { ReviewRatingField } from '@/features/dashboard/submission/components/ReviewRatingField';
 import { RestaurantSelector } from '@/features/dashboard/submission/components/RestaurantSelector';
 import { MealSelector } from '@/features/dashboard/submission/components/MealSelector';
+import { useUpdateMeal } from '@/features/dashboard/meals/api';
 import { useCreateReview } from '../api';
 
 const dietaryOptions = [
@@ -47,29 +46,55 @@ const dietaryOptions = [
 const CURRENCIES = ['₩', '$'] as const;
 
 // We need place_id, so we enforce it
-const createReviewSchema = (isExistingMeal: boolean) =>
-  z.object({
+const reviewFormSchema = z
+  .object({
     placeId: z.string().min(1, 'Select a valid restaurant.'),
     restaurantName: z.string().min(2, 'Add the restaurant name.'),
+    mealId: z.string().optional(),
     mealName: z.string().min(2, 'Give the dish a memorable name.'),
-    price: isExistingMeal
-      ? z.number().optional()
-      : z.number().min(1000, 'Share the price (₩1,000+).'),
-    currency: isExistingMeal
-      ? z.enum(CURRENCIES).optional()
-      : z.enum(CURRENCIES, {
-          message: 'Select a currency.',
-        }),
+    price: z
+      .number({ invalid_type_error: 'Share the price (₩1,000+).' })
+      .optional(),
+    currency: z
+      .enum(CURRENCIES, {
+        message: 'Select a currency.',
+      })
+      .optional(),
     rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
     dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
     visitDate: z.string().min(1, 'Tell us when you visited.'),
     review: z.string().min(10, 'Leave at least 10 characters for context.'), // Reduced for easier testing
     photo: z.any().optional(), // File object
+  })
+  .superRefine((data, ctx) => {
+    if (!data.mealId) {
+      if (typeof data.price !== 'number' || Number.isNaN(data.price) || data.price < 1000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['price'],
+          message: 'Share the price (₩1,000+).',
+        });
+      }
+      if (!data.currency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['currency'],
+          message: 'Select a currency.',
+        });
+      }
+    } else if (typeof data.price === 'number' && data.price < 1000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price'],
+        message: 'Price must be at least ₩1,000.',
+      });
+    }
   });
 
 type ReviewFormValues = {
   placeId: string;
   restaurantName: string;
+  mealId?: string;
   mealName: string;
   price?: number;
   currency?: CurrencyOption;
@@ -86,16 +111,18 @@ export function ReviewFormPage(): JSX.Element {
   const addPoints = useMealmapStore((state) => state.addPoints);
   const userPoints = useMealmapStore((state) => state.userPoints);
   
-  const { mutate: createReview, isPending: isSubmitting } = useCreateReview();
+  const { mutateAsync: createReview, isPending: isSubmitting } = useCreateReview();
+  const { mutateAsync: updateMeal, isPending: isUpdatingMeal } = useUpdateMeal();
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isExistingMeal, setIsExistingMeal] = useState(false);
+  const [selectedMealMeta, setSelectedMealMeta] = useState<{ id?: string; price?: number | null }>({});
 
   const form = useForm<ReviewFormValues>({
-    resolver: zodResolver(createReviewSchema(isExistingMeal)),
+    resolver: zodResolver(reviewFormSchema),
     defaultValues: {
       placeId: '',
       restaurantName: '',
+      mealId: undefined,
       mealName: '',
       price: 12000,
       currency: '₩',
@@ -107,16 +134,14 @@ export function ReviewFormPage(): JSX.Element {
     },
   });
 
-  useEffect(() => {
-    form.clearErrors('price');
-    form.clearErrors('currency');
-    form.trigger(['price', 'currency']);
-  }, [isExistingMeal, form]);
-
   const watchPrice = form.watch('price');
   const currentRating = form.watch('rating');
-  const currentCurrency = form.watch('currency');
+  const currentCurrency = form.watch('currency') ?? '₩';
   const currentDietaryTags = form.watch('dietaryTags');
+  const watchMealName = form.watch('mealName');
+  const watchMealId = form.watch('mealId');
+  const watchPlaceId = form.watch('placeId');
+  const isBusy = isSubmitting || isUpdatingMeal;
 
   const handleCurrencyChange = useCallback(
     (value: CurrencyOption) => {
@@ -158,24 +183,29 @@ export function ReviewFormPage(): JSX.Element {
         form.setValue('placeId', placeId, { shouldValidate: true });
       }
       // Reset meal when restaurant changes
-      form.setValue('mealName', '');
-      setIsExistingMeal(false);
+      form.setValue('mealName', '', { shouldValidate: true });
+      form.setValue('mealId', undefined, { shouldValidate: true });
+      setSelectedMealMeta({});
     },
     [form]
   );
 
   const handleMealChange = useCallback(
-    (mealName: string, isExisting: boolean) => {
-      form.setValue('mealName', mealName, { shouldValidate: true });
-      setIsExistingMeal(isExisting);
-      if (isExisting) {
-        form.setValue('price', undefined);
-        form.setValue('currency', undefined);
-      } else {
-        form.setValue('price', 12000);
-        form.setValue('currency', '₩');
+    (selection: { id?: string; name: string; price?: number | null }) => {
+      form.setValue('mealName', selection.name, { shouldValidate: true });
+      form.setValue('mealId', selection.id, { shouldValidate: true });
+      if (typeof selection.price === 'number') {
+        form.setValue('price', selection.price, {
+          shouldValidate: true,
+          shouldDirty: false,
+        });
+      } else if (!form.getValues('price')) {
+        form.setValue('price', 12000, { shouldDirty: false });
       }
-      form.trigger();
+      if (!form.getValues('currency')) {
+        form.setValue('currency', '₩', { shouldDirty: false });
+      }
+      setSelectedMealMeta({ id: selection.id, price: selection.price ?? null });
     },
     [form]
   );
@@ -193,12 +223,24 @@ export function ReviewFormPage(): JSX.Element {
     reader.readAsDataURL(file);
   };
 
-  const onSubmit = (values: ReviewFormValues) => {
+  const onSubmit = async (values: ReviewFormValues) => {
     const pointsAwarded = 50;
 
-    createReview(
-      {
+    try {
+      if (
+        values.mealId &&
+        typeof values.price === 'number' &&
+        values.price !== (selectedMealMeta.price ?? undefined)
+      ) {
+        await updateMeal({
+          meal_id: values.mealId,
+          price: values.price,
+        });
+      }
+
+      await createReview({
         place_id: values.placeId,
+        meal_id: values.mealId,
         meal_name: values.mealName,
         rating: values.rating,
         text: values.review,
@@ -211,25 +253,21 @@ export function ReviewFormPage(): JSX.Element {
         is_gluten_free: values.dietaryTags.includes('Gluten-free') ? 'yes' : 'no',
         is_dairy_free: values.dietaryTags.includes('Dairy-free') ? 'yes' : 'no',
         is_nut_free: values.dietaryTags.includes('Nut-free') ? 'yes' : 'no',
-      },
-      {
-        onSuccess: () => {
-            addPoints(pointsAwarded);
-            toast.success('Review submitted!', {
-                description: `🏆 +${pointsAwarded} points!`,
-            });
-            form.reset();
-            setPhotoPreview(null);
-            navigate('/');
-        },
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onError: (error: any) => {
-            toast.error('Failed to submit review', {
-                description: error.message,
-            });
-        }
-      }
-    );
+      });
+
+      addPoints(pointsAwarded);
+      toast.success('Review submitted!', {
+        description: `🏆 +${pointsAwarded} points!`,
+      });
+      form.reset();
+      setPhotoPreview(null);
+      setSelectedMealMeta({});
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to submit review', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
   };
 
   return (
@@ -298,9 +336,11 @@ export function ReviewFormPage(): JSX.Element {
               />
 
               <MealSelector
-                value={form.watch('mealName')}
+                mealName={watchMealName}
+                mealId={watchMealId}
                 onChange={handleMealChange}
-                restaurantId={form.watch('placeId')}
+                restaurantId={watchPlaceId}
+                currentPrice={watchPrice}
                 error={form.formState.errors.mealName?.message}
               />
             </FieldGroup>
@@ -308,55 +348,60 @@ export function ReviewFormPage(): JSX.Element {
             <FieldSeparator>Experience</FieldSeparator>
 
             <FieldGroup className="gap-6">
-              {!isExistingMeal && (
-                <>
-                  <Field>
-                    <FieldLabel>
-                      <FieldTitle>Price paid</FieldTitle>
-                      <FieldDescription>Rough total including sides or drinks.</FieldDescription>
-                    </FieldLabel>
-                    <FieldContent className="gap-3">
-                      <Controller
-                        name="price"
-                        control={form.control}
-                        render={({ field }) => (
-                          <>
-                            <Slider
-                              value={[field.value || 12000]}
-                              onValueChange={(value) => field.onChange(value[0])}
-                              min={1000}
-                              max={50000}
-                              step={500}
-                              aria-label="Price in won"
-                            />
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>₩1k</span>
-                              <span>
-                                {new Intl.NumberFormat('en', { notation: 'compact' }).format(field.value || 12000)}₩
-                              </span>
-                              <span>₩50k</span>
-                            </div>
-                          </>
-                        )}
-                      />
-                      <FieldError
-                        errors={
-                          form.formState.errors.price
-                            ? [{ message: form.formState.errors.price.message }]
-                            : undefined
-                        }
-                      />
-                    </FieldContent>
-                  </Field>
-
-                  <ReviewCurrencySelector
-                    value={currentCurrency || '₩'}
-                    options={CURRENCIES}
-                    onChange={handleCurrencyChange}
-                    error={form.formState.errors.currency?.message}
+              <Field>
+                <FieldLabel>
+                  <FieldTitle>Price paid</FieldTitle>
+                  <FieldDescription>
+                    Required for new dishes. Update it here if the known price is outdated.
+                  </FieldDescription>
+                </FieldLabel>
+                <FieldContent className="gap-3">
+                  <Controller
+                    name="price"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min={1000}
+                          step={100}
+                          placeholder="12000"
+                          value={field.value ?? ''}
+                          onChange={(event) => {
+                            const nextValue = event.target.value;
+                            if (nextValue === '') {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const parsed = Number(nextValue);
+                            if (!Number.isNaN(parsed)) {
+                              field.onChange(parsed);
+                            }
+                          }}
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {currentCurrency}
+                        </span>
+                      </div>
+                    )}
                   />
-                </>
-              )}
+                  <FieldError
+                    errors={
+                      form.formState.errors.price
+                        ? [{ message: form.formState.errors.price.message }]
+                        : undefined
+                    }
+                  />
+                </FieldContent>
+              </Field>
+
+              <ReviewCurrencySelector
+                value={currentCurrency}
+                options={CURRENCIES}
+                onChange={handleCurrencyChange}
+                error={form.formState.errors.currency?.message}
+              />
 
               <Field>
                 <FieldLabel>
@@ -426,12 +471,12 @@ export function ReviewFormPage(): JSX.Element {
               </p>
               <p className="text-sm text-foreground">
                 {form.watch('mealName') || 'Untitled meal'}
-                {!isExistingMeal && watchPrice && (
+                {watchPrice && (
                   <>
                     {' · '}
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
-                      currency: (currentCurrency || '₩') === '$' ? 'USD' : 'KRW',
+                      currency: currentCurrency === '$' ? 'USD' : 'KRW',
                       maximumFractionDigits: 0,
                     }).format(watchPrice)}
                   </>
@@ -439,8 +484,8 @@ export function ReviewFormPage(): JSX.Element {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="rounded-full" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit review'}
+              <Button type="submit" className="rounded-full" disabled={isBusy}>
+                {isBusy ? 'Submitting...' : 'Submit review'}
               </Button>
               <Button
                 type="button"

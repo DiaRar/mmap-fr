@@ -1,6 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/api';
-import type { Page, PlaceBasicInfo } from '@/features/dashboard/types';
+import type { ObjectCreationResponse, Page, PlaceBasicInfo } from '@/features/dashboard/types';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
 
 interface UsePlacesOptions {
@@ -29,7 +29,7 @@ export function usePlaces(options: UsePlacesOptions = {}) {
       if (lng !== undefined && lng !== null) params.append('long', lng.toString());
       if (options.radius_m) params.append('radius_meters', options.radius_m.toString());
       if (options.page) params.append('page', options.page.toString());
-      if (options.size) params.append('size', options.size.toString());
+      if (options.size) params.append('page_size', options.size.toString());
 
       if (options.searchTerm) {
         params.append('name', options.searchTerm);
@@ -57,3 +57,40 @@ export function usePlaces(options: UsePlacesOptions = {}) {
 //         enabled: searchTerm.length > 0,
 //     });
 // }
+
+interface CreatePlaceInput {
+  name: string;
+  latitude: number;
+  longitude: number;
+  address?: string;
+  cuisine?: string;
+  images?: File[];
+}
+
+export function useCreatePlace() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (data: CreatePlaceInput) => {
+      const formData = new FormData();
+      formData.append('name', data.name);
+      formData.append('latitude', data.latitude.toString());
+      formData.append('longitude', data.longitude.toString());
+      if (data.address) formData.append('address', data.address);
+      if (data.cuisine) formData.append('cuisine', data.cuisine);
+      if (data.images) {
+        data.images.forEach((file) => {
+          formData.append('images', file);
+        });
+      }
+
+      return apiRequest<ObjectCreationResponse>('/places', {
+        method: 'POST',
+        body: formData,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['places'] });
+    },
+  });
+}
