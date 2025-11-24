@@ -100,6 +100,19 @@ export function RecommendationsPage(): JSX.Element {
 
   const hasMore = activeIndex < recommendations.length;
 
+  const handleOpenMealDetails = useCallback(() => {
+    if (!activeRecommendation) {
+      return;
+    }
+    navigate(`/meals/${activeRecommendation.id}`, {
+      state: {
+        placeId: activeRecommendation.restaurantId,
+        restaurantName: activeRestaurantName,
+        mealName: activeRecommendation.title,
+      },
+    });
+  }, [activeRecommendation, activeRestaurantName, navigate]);
+
   if (isPending) {
     return (
       <div className="flex flex-1 items-center justify-center">
@@ -229,24 +242,34 @@ export function RecommendationsPage(): JSX.Element {
       </main>
 
       {/* Bottom Controls */}
-      <footer className="flex items-center justify-center gap-8 pb-6 pt-2">
+      <footer className="flex flex-col items-center gap-4 pb-6 pt-2">
         <Button
-          size="lg"
-          variant="outline"
-          className="size-14 rounded-full border-2 border-red-100 bg-white text-red-500 hover:bg-red-50 hover:text-red-600 shadow-sm"
-          onClick={() => settleCard('dismissed')}
+          variant="secondary"
+          className="rounded-full px-6"
+          onClick={handleOpenMealDetails}
+          disabled={!activeRecommendation}
         >
-          <X className="size-6" />
+          View meal details
         </Button>
+        <div className="flex items-center justify-center gap-8">
+          <Button
+            size="lg"
+            variant="outline"
+            className="size-14 rounded-full border-2 border-red-100 bg-white text-red-500 hover:bg-red-50 hover:text-red-600 shadow-sm"
+            onClick={() => settleCard('dismissed')}
+          >
+            <X className="size-6" />
+          </Button>
 
-        <Button
-          size="lg"
-          variant="outline"
-          className="size-14 rounded-full border-2 border-green-100 bg-white text-green-500 hover:bg-green-50 hover:text-green-600 shadow-sm"
-          onClick={() => settleCard('liked')}
-        >
-          <Heart className="size-6 fill-current" />
-        </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="size-14 rounded-full border-2 border-green-100 bg-white text-green-500 hover:bg-green-50 hover:text-green-600 shadow-sm"
+            onClick={() => settleCard('liked')}
+          >
+            <Heart className="size-6 fill-current" />
+          </Button>
+        </div>
       </footer>
     </div>
   );

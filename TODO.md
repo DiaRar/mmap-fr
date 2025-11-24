@@ -20,8 +20,8 @@
 - [x] On the details page, render meals as an accordion/list where each meal row can expand to show its reviews or ratings breakdown. Reuse the dietary tags and upload gallery components so reviewers can quickly jump from the detail view straight into the submission form for that restaurant.
 
 ## Meal details flow
-- [ ] Introduce a `/meals/:mealId` route + page focused on a single dish: show price trends, dietary tags, wait-time history, and the full review feed filtered to that meal.
-- [ ] Wire the RestaurantDetailsPage accordion and any meal chips elsewhere so they deep-link into the meal details route (pass the selected meal context to the submission form as well).
+- [x] Introduce a `/meals/:mealId` route + page focused on a single dish: show price trends, dietary tags, wait-time history, and the full review feed filtered to that meal.
+- [x] Wire the RestaurantDetailsPage accordion and any meal chips elsewhere so they deep-link into the meal details route (pass the selected meal context to the submission form as well).
 
 ## Recommendations & swipes
 - [ ] Replace the mock data in `useRecommendationsQuery` (`src/features/dashboard/data/hooks.ts`) with a real request to `GET /users/me/feed` so `RecommendationCard.tsx` displays live meals from the backend (`MealResponse` objects with `first_image.image_url`, `avg_rating`, `tags`, etc.). Update `MealRecommendation` typing or add a mapper to keep the UI props consistent.
@@ -32,7 +32,6 @@
 - [ ] The feed currently renders a single page from `usePlaces` without pagination or “load more”. Implement cursor or page-based loading using the `Page<PlaceResponse>` metadata returned by `/places` (expose “Load older spots” button or infinite scroll) and pass `page` into the hook so users can browse beyond the first ten results.
 
 ## Priority order
-1. Meal details flow
-2. Recommendations & swipes
-3. RestaurantSearch.tsx – dynamic location
-4. Additional items identified during review
+1. Recommendations & swipes
+2. RestaurantSearch.tsx – dynamic location
+3. Additional items identified during review

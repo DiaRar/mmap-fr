@@ -25,11 +25,19 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 
-import type { DietaryTag, MealResponse, MealTags, ReviewResponse } from '@/features/dashboard/types';
+import type { DietaryTag, MealResponse, ReviewResponse } from '@/features/dashboard/types';
 import { usePlaceDetails, usePlaceReviews } from '@/features/dashboard/restaurants/api';
 import { useMeals } from '@/features/dashboard/meals/api';
 import { DietaryTagSelector } from '@/features/dashboard/submission/components/DietaryTagSelector';
 import { PhotoUploadField } from '@/features/dashboard/submission/components/PhotoUploadField';
+import {
+  extractMealTags,
+  extractReviewTags,
+  formatCurrency,
+  formatCuisine,
+  formatDistance,
+  formatRelativeDate,
+} from '@/features/dashboard/restaurants/utils';
 
 const dietaryTagOptions = [
   'Halal',
@@ -42,113 +50,13 @@ const dietaryTagOptions = [
   'Low-carb',
 ] as const satisfies readonly DietaryTag[];
 
-const currencyFormatter = new Intl.NumberFormat('ko-KR', {
-  style: 'currency',
-  currency: 'KRW',
-  maximumFractionDigits: 0,
-});
-
-function formatCurrency(value?: number | null): string | null {
-  if (typeof value !== 'number') {
-    return null;
-  }
-
-  return currencyFormatter.format(value);
-}
-
-function formatDistance(distanceMeters?: number | null): string | null {
-  if (typeof distanceMeters !== 'number') {
-    return null;
-  }
-
-  if (distanceMeters < 1000) {
-    return `${Math.round(distanceMeters)} m`;
-  }
-
-  const km = distanceMeters / 1000;
-  return `${km.toFixed(km >= 10 ? 0 : 1)} km`;
-}
-
-function formatRelativeDate(date?: string): string | null {
-  if (!date) {
-    return null;
-  }
-  const delta = Date.now() - new Date(date).getTime();
-  const days = Math.floor(delta / (1000 * 60 * 60 * 24));
-  if (days <= 0) {
-    const hours = Math.floor(delta / (1000 * 60 * 60));
-    if (hours <= 0) {
-      const minutes = Math.floor(delta / (1000 * 60));
-      return `${minutes}m ago`;
-    }
-    return `${hours}h ago`;
-  }
-  if (days < 30) {
-    return `${days}d ago`;
-  }
-  const months = Math.floor(days / 30);
-  if (months < 12) {
-    return `${months}mo ago`;
-  }
-  const years = Math.floor(months / 12);
-  return `${years}y ago`;
-}
-
-function formatCuisine(value?: string | null): string | null {
-  if (!value) {
-    return null;
-  }
-  return value
-    .split(/[_\s]+/)
-    .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
-    .join(' ');
-}
-
-function extractMealTags(tags?: MealTags | null): string[] {
-  if (!tags) {
-    return [];
-  }
-
-  const labelMap: Record<keyof MealTags, string> = {
-    is_vegan: 'Vegan friendly',
-    is_halal: 'Halal options',
-    is_vegetarian: 'Vegetarian friendly',
-    is_spicy: 'Spicy',
-    is_gluten_free: 'Gluten free',
-    is_dairy_free: 'Dairy free',
-    is_nut_free: 'Nut free',
-  };
-
-  return Object.entries(tags)
-    .filter((entry): entry is [keyof MealTags, string] => Boolean(entry[1]))
-    .filter(([, value]) => value === 'yes')
-    .map(([key]) => labelMap[key]);
-}
-
-const reviewTagLabels = {
-  is_vegan: 'Vegan',
-  is_halal: 'Halal',
-  is_vegetarian: 'Vegetarian',
-  is_spicy: 'Spicy',
-  is_gluten_free: 'Gluten free',
-  is_dairy_free: 'Dairy free',
-  is_nut_free: 'Nut free',
-} as const;
-
-type ReviewTagField = keyof typeof reviewTagLabels;
-
-function extractReviewTags(review: ReviewResponse): string[] {
-  return (Object.keys(reviewTagLabels) as ReviewTagField[])
-    .filter((key) => review[key] === 'yes')
-    .map((key) => reviewTagLabels[key]);
-}
-
 interface MealAccordionProps {
   meals: MealResponse[];
   reviews: ReviewResponse[];
   expandedMealId: string | null;
   onToggle: (mealId: string) => void;
   onReviewMeal: (payload: { mealId: string; mealName: string }) => void;
+  onViewMealDetails: (payload: { mealId: string; mealName: string }) => void;
 }
 
 function MealAccordion({
@@ -157,6 +65,7 @@ function MealAccordion({
   expandedMealId,
   onToggle,
   onReviewMeal,
+  onViewMealDetails,
 }: MealAccordionProps): JSX.Element {
   if (!meals.length) {
     return (
@@ -215,19 +124,31 @@ function MealAccordion({
                 id={`meal-panel-${meal.id}`}
                 className="border-t border-border/60 px-5 py-4 text-sm text-muted-foreground"
               >
-                {dietaryBadges.length ? (
-                  <div className="flex flex-wrap gap-2 pb-3">
-                    {dietaryBadges.map((badge) => (
-                      <Badge
-                        key={badge}
-                        variant="secondary"
-                        className="rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold text-emerald-800"
-                      >
-                        {badge}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : null}
+                <div className="flex flex-wrap items-center gap-3 pb-3">
+                  {dietaryBadges.length ? (
+                    <div className="flex flex-1 flex-wrap gap-2">
+                      {dietaryBadges.map((badge) => (
+                        <Badge
+                          key={badge}
+                          variant="secondary"
+                          className="rounded-full bg-emerald-100/70 px-3 py-1 text-xs font-semibold text-emerald-800"
+                        >
+                          {badge}
+                        </Badge>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="flex-1 text-sm text-muted-foreground">No dietary tags documented yet.</p>
+                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="rounded-full text-xs font-semibold"
+                    onClick={() => onViewMealDetails({ mealId: meal.id, mealName: meal.name })}
+                  >
+                    View meal insights
+                  </Button>
+                </div>
                 {mealReviews.length ? (
                   <div className="space-y-4">
                     {mealReviews.map((review) => (
@@ -401,6 +322,19 @@ export function RestaurantDetailsPage(): JSX.Element {
           placeId,
           restaurantName: placeDetails?.name,
           mealId,
+          mealName,
+        },
+      });
+    },
+    [navigate, placeDetails?.name, placeId]
+  );
+
+  const handleViewMealDetails = useCallback(
+    ({ mealId, mealName }: { mealId: string; mealName: string }) => {
+      navigate(`/meals/${mealId}`, {
+        state: {
+          placeId,
+          restaurantName: placeDetails?.name,
           mealName,
         },
       });
@@ -586,6 +520,7 @@ export function RestaurantDetailsPage(): JSX.Element {
                   expandedMealId={expandedMealId}
                   onToggle={handleToggleMeal}
                   onReviewMeal={handleReviewMeal}
+                  onViewMealDetails={handleViewMealDetails}
                 />
               </div>
               <Card className="rounded-3xl border border-border/60 bg-white/85 shadow-none">

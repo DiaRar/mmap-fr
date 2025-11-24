@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router-dom';
 
 import type { PlaceBasicInfo } from '../../../types';
 import { RestaurantList } from '../RestaurantList';
@@ -44,7 +45,11 @@ const mockRestaurants: PlaceBasicInfo[] = [
 
 describe('<RestaurantList />', () => {
   it('renders a card for each restaurant', () => {
-    render(<RestaurantList restaurants={mockRestaurants} />);
+    render(
+      <MemoryRouter>
+        <RestaurantList restaurants={mockRestaurants} />
+      </MemoryRouter>
+    );
 
     mockRestaurants.forEach((restaurant) => {
       expect(screen.getByText(restaurant.name)).toBeVisible();
@@ -55,7 +60,11 @@ describe('<RestaurantList />', () => {
   it('invokes onBookmark when a restaurant is bookmarked', async () => {
     const user = userEvent.setup();
     const handleBookmark = vi.fn();
-    render(<RestaurantList restaurants={mockRestaurants} onBookmark={handleBookmark} />);
+    render(
+      <MemoryRouter>
+        <RestaurantList restaurants={mockRestaurants} onBookmark={handleBookmark} />
+      </MemoryRouter>
+    );
 
     const bookmarkButtons = screen.getAllByRole('button', { name: /bookmark/i });
     await user.click(bookmarkButtons[0]);
@@ -64,7 +73,11 @@ describe('<RestaurantList />', () => {
   });
 
   it('renders an empty state when no restaurants are available', () => {
-    render(<RestaurantList restaurants={[]} />);
+    render(
+      <MemoryRouter>
+        <RestaurantList restaurants={[]} />
+      </MemoryRouter>
+    );
 
     expect(screen.getByText('No restaurants found')).toBeVisible();
     expect(screen.getByText(/Try updating your search or filters/i)).toBeVisible();

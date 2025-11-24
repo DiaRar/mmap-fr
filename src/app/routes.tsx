@@ -52,6 +52,12 @@ const RestaurantDetailsPage = lazy(() =>
   }))
 );
 
+const MealDetailsPage = lazy(() =>
+  import('@/features/dashboard/meals/pages/MealDetailsPage').then((module) => ({
+    default: module.MealDetailsPage,
+  }))
+);
+
 function RouteSpinner(): JSX.Element {
   return (
     <div className="grid min-h-screen w-full place-items-center p-6">
@@ -163,6 +169,14 @@ const router = createBrowserRouter([
         element: (
           <Suspense fallback={<RouteSpinner />}>
             <RestaurantDetailsPage />
+          </Suspense>
+        ),
+      },
+      {
+        path: 'meals/:mealId',
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <MealDetailsPage />
           </Suspense>
         ),
       },

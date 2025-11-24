@@ -187,6 +187,15 @@ export interface MealResponse {
   test_id?: string | null;
 }
 
+export interface MealDetailedResponse extends MealResponse {
+  description?: string | null;
+  images: BackendImageResponse[];
+  avg_price?: number | null;
+  avg_waiting_time?: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ObjectCreationResponse {
   id: string;
 }
