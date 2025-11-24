@@ -235,16 +235,20 @@ export function RestaurantSearch({
                 Current Location
               </Badge>
               <div className="flex flex-col gap-1" aria-live="polite">
-                <div className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <div className="flex min-w-0 items-center gap-1.5 text-sm font-semibold text-foreground">
                   <MapPin className="size-4 text-primary" />
-                  <span className={status.isError ? 'text-destructive' : undefined}>
+                  <span
+                    className={`${status.isError ? 'text-destructive' : ''} truncate`}
+                    style={{ maxWidth: '60vw' }}
+                  >
                     {status.message}
                   </span>
                   {status.showSpinner && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
                 </div>
                 {helperMessage && (
                   <p
-                    className={`text-xs ${status.isError ? 'text-destructive' : 'text-muted-foreground'}`}
+                    className={`text-xs ${status.isError ? 'text-destructive' : 'text-muted-foreground'} truncate`}
+                    style={{ maxWidth: '70vw' }}
                   >
                     {helperMessage}
                   </p>
