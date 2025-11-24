@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { mockRecommendations, mockRestaurants } from '@/features/dashboard/data/mock-data';
-import type { MealRecommendation, NearbyRestaurant } from '@/features/dashboard/types';
+import type { MealRecommendation, PlaceBasicInfo } from '@/features/dashboard/types';
 
 const emulateLatency = async <T>(payload: T, delay = 400): Promise<T> =>
   new Promise((resolve) => {
@@ -10,17 +10,21 @@ const emulateLatency = async <T>(payload: T, delay = 400): Promise<T> =>
   });
 
 const restaurantBounds = (() => {
-  const lats = mockRestaurants.map((restaurant) => restaurant.coordinates.lat);
-  const lngs = mockRestaurants.map((restaurant) => restaurant.coordinates.lng);
+  const lats = mockRestaurants.map((restaurant) => restaurant.latitude);
+  const lngs = mockRestaurants.map((restaurant) => restaurant.longitude);
+
+  const safeLats = lats.length ? lats : [0];
+  const safeLngs = lngs.length ? lngs : [0];
+
   return {
-    minLat: Math.min(...lats),
-    maxLat: Math.max(...lats),
-    minLng: Math.min(...lngs),
-    maxLng: Math.max(...lngs),
+    minLat: Math.min(...safeLats),
+    maxLat: Math.max(...safeLats),
+    minLng: Math.min(...safeLngs),
+    maxLng: Math.max(...safeLngs),
   };
 })();
 
-const fetchRestaurants = async (): Promise<NearbyRestaurant[]> => {
+const fetchRestaurants = async (): Promise<PlaceBasicInfo[]> => {
   return emulateLatency(mockRestaurants, 350);
 };
 

@@ -1,14 +1,16 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import type { NearbyRestaurant } from '../../../types';
+import type { PlaceBasicInfo } from '../../../types';
 import { RestaurantList } from '../RestaurantList';
 import { describe, expect, it, vi } from 'vitest';
 
-const mockRestaurants: NearbyRestaurant[] = [
+const mockRestaurants: PlaceBasicInfo[] = [
   {
     id: 'test-bistro',
     name: 'Test Bistro',
+    latitude: 36.37,
+    longitude: 127.36,
     cuisine: 'Fusion',
     rating: 4.2,
     reviewCount: 128,
@@ -24,6 +26,8 @@ const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'lumen-cafe',
     name: 'Lumen Cafe',
+    latitude: 36.36,
+    longitude: 127.35,
     cuisine: 'Coffee',
     rating: 4.8,
     reviewCount: 289,
@@ -44,7 +48,7 @@ describe('<RestaurantList />', () => {
 
     mockRestaurants.forEach((restaurant) => {
       expect(screen.getByText(restaurant.name)).toBeVisible();
-      expect(screen.getByText(restaurant.cuisine, { exact: false })).toBeVisible();
+      expect(screen.getByText(restaurant.cuisine!, { exact: false })).toBeVisible();
     });
   });
 

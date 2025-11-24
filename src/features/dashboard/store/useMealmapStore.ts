@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-import type { RecommendationResponse, ReviewDraft } from '@/features/dashboard/types';
+import type { RecommendationResponse, ReviewDraft, GeoPoint } from '@/features/dashboard/types';
 
 type BookmarkState = Record<string, boolean>;
 type RecommendationState = Record<string, RecommendationResponse>;
@@ -18,6 +18,8 @@ interface MealmapState {
   addReviewDraft: (draft: ReviewDraft) => void;
   userPoints: number;
   addPoints: (points: number) => void;
+  userLocation: GeoPoint | null;
+  setUserLocation: (location: GeoPoint | null) => void;
 }
 
 export const useMealmapStore = create<MealmapState>((set) => ({
@@ -51,4 +53,6 @@ export const useMealmapStore = create<MealmapState>((set) => ({
     set((state) => ({
       userPoints: state.userPoints + points,
     })),
+  userLocation: null,
+  setUserLocation: (location) => set({ userLocation: location }),
 }));

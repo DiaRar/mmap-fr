@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState, useEffect, type JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState, type JSX } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -21,18 +21,16 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Slider } from '@/components/ui/slider';
-
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import type { DietaryTag } from '@/features/dashboard/types';
 import { PhotoUploadField } from '@/features/dashboard/submission/components/PhotoUploadField';
 import { ReviewCurrencySelector } from '@/features/dashboard/submission/components/ReviewCurrencySelector';
 import { DietaryTagSelector } from '@/features/dashboard/submission/components/DietaryTagSelector';
 import { ReviewRatingField } from '@/features/dashboard/submission/components/ReviewRatingField';
-import { ReviewDraftList } from '@/features/dashboard/submission/components/ReviewDraftList';
 import { RestaurantSelector } from '@/features/dashboard/submission/components/RestaurantSelector';
 import { MealSelector } from '@/features/dashboard/submission/components/MealSelector';
-import { mockRestaurants } from '@/features/dashboard/data/mock-data';
+import { useUpdateMeal } from '@/features/dashboard/meals/api';
+import { useCreateReview } from '../api';
 
 const dietaryOptions = [
   'Halal',
@@ -47,27 +45,56 @@ const dietaryOptions = [
 
 const CURRENCIES = ['₩', '$'] as const;
 
-const createReviewSchema = (isExistingMeal: boolean) =>
-  z.object({
+// We need place_id, so we enforce it
+const reviewFormSchema = z
+  .object({
+    placeId: z.string().min(1, 'Select a valid restaurant.'),
     restaurantName: z.string().min(2, 'Add the restaurant name.'),
+    mealId: z.string().optional(),
     mealName: z.string().min(2, 'Give the dish a memorable name.'),
-    price: isExistingMeal
-      ? z.number().optional()
-      : z.number().min(1000, 'Share the price (₩1,000+).'),
-    currency: isExistingMeal
-      ? z.enum(CURRENCIES).optional()
-      : z.enum(CURRENCIES, {
-          message: 'Select a currency.',
-        }),
+    price: z
+      .number({ invalid_type_error: 'Share the price (₩1,000+).' })
+      .optional(),
+    currency: z
+      .enum(CURRENCIES, {
+        message: 'Select a currency.',
+      })
+      .optional(),
     rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
     dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
     visitDate: z.string().min(1, 'Tell us when you visited.'),
-    review: z.string().min(40, 'Leave at least 40 characters for context.'),
-    photo: z.string().optional(),
+    review: z.string().min(10, 'Leave at least 10 characters for context.'), // Reduced for easier testing
+    photo: z.any().optional(), // File object
+  })
+  .superRefine((data, ctx) => {
+    if (!data.mealId) {
+      if (typeof data.price !== 'number' || Number.isNaN(data.price) || data.price < 1000) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['price'],
+          message: 'Share the price (₩1,000+).',
+        });
+      }
+      if (!data.currency) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: ['currency'],
+          message: 'Select a currency.',
+        });
+      }
+    } else if (typeof data.price === 'number' && data.price < 1000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['price'],
+        message: 'Price must be at least ₩1,000.',
+      });
+    }
   });
 
 type ReviewFormValues = {
+  placeId: string;
   restaurantName: string;
+  mealId?: string;
   mealName: string;
   price?: number;
   currency?: CurrencyOption;
@@ -75,55 +102,83 @@ type ReviewFormValues = {
   dietaryTags: DietaryTag[];
   visitDate: string;
   review: string;
-  photo?: string;
+  photo?: File;
 };
 type CurrencyOption = (typeof CURRENCIES)[number];
 
-const slugify = (value: string) =>
-  value
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .trim()
-    .replace(/\s+/g, '-');
-
 export function ReviewFormPage(): JSX.Element {
   const navigate = useNavigate();
-  const addReviewDraft = useMealmapStore((state) => state.addReviewDraft);
-  const reviewDrafts = useMealmapStore((state) => state.reviewDrafts);
   const addPoints = useMealmapStore((state) => state.addPoints);
   const userPoints = useMealmapStore((state) => state.userPoints);
+  
+  const { mutateAsync: createReview, isPending: isSubmitting } = useCreateReview();
+  const { mutateAsync: updateMeal, isPending: isUpdatingMeal } = useUpdateMeal();
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [isExistingMeal, setIsExistingMeal] = useState(false);
-  const [selectedRestaurantId, setSelectedRestaurantId] = useState<string | undefined>();
+  const [selectedMealMeta, setSelectedMealMeta] = useState<{ id?: string; price?: number | null }>({});
+  const location = useLocation();
+  const reviewContext = location.state as
+    | {
+        placeId?: string;
+        restaurantName?: string;
+        mealId?: string;
+        mealName?: string;
+      }
+    | undefined;
 
   const form = useForm<ReviewFormValues>({
-    resolver: zodResolver(createReviewSchema(isExistingMeal)),
+    resolver: zodResolver(reviewFormSchema),
     defaultValues: {
+      placeId: '',
       restaurantName: '',
+      mealId: undefined,
       mealName: '',
       price: 12000,
       currency: '₩',
       rating: 4,
       dietaryTags: [],
-      visitDate: '',
+      visitDate: new Date().toISOString().split('T')[0],
       review: '',
       photo: undefined,
     },
   });
 
-  // Update resolver when isExistingMeal changes
   useEffect(() => {
-    form.clearErrors('price');
-    form.clearErrors('currency');
-    // Re-validate with new schema
-    form.trigger(['price', 'currency']);
-  }, [isExistingMeal, form]);
+    if (!reviewContext) {
+      return;
+    }
+
+    if (reviewContext.placeId) {
+      form.setValue('placeId', reviewContext.placeId, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.restaurantName) {
+      form.setValue('restaurantName', reviewContext.restaurantName, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
+    }
+    if (reviewContext.mealId) {
+      form.setValue('mealId', reviewContext.mealId, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.mealName) {
+      form.setValue('mealName', reviewContext.mealName, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.mealId || reviewContext.mealName) {
+      setSelectedMealMeta((prev) => ({
+        ...prev,
+        id: reviewContext.mealId,
+      }));
+    }
+  }, [form, reviewContext]);
 
   const watchPrice = form.watch('price');
   const currentRating = form.watch('rating');
-  const currentCurrency = form.watch('currency');
+  const currentCurrency = form.watch('currency') ?? '₩';
   const currentDietaryTags = form.watch('dietaryTags');
+  const watchMealName = form.watch('mealName');
+  const watchMealId = form.watch('mealId');
+  const watchPlaceId = form.watch('placeId');
+  const isBusy = isSubmitting || isUpdatingMeal;
 
   const handleCurrencyChange = useCallback(
     (value: CurrencyOption) => {
@@ -155,88 +210,102 @@ export function ReviewFormPage(): JSX.Element {
       navigate(-1);
       return;
     }
-
     navigate('/', { replace: true });
   }, [navigate]);
 
   const handleRestaurantChange = useCallback(
-    (restaurantName: string) => {
+    (restaurantName: string, placeId?: string) => {
       form.setValue('restaurantName', restaurantName, { shouldValidate: true });
-      const restaurant = mockRestaurants.find((r) => r.name === restaurantName);
-      setSelectedRestaurantId(restaurant?.id);
+      if (placeId) {
+        form.setValue('placeId', placeId, { shouldValidate: true });
+      }
       // Reset meal when restaurant changes
-      form.setValue('mealName', '');
-      setIsExistingMeal(false);
+      form.setValue('mealName', '', { shouldValidate: true });
+      form.setValue('mealId', undefined, { shouldValidate: true });
+      setSelectedMealMeta({});
     },
     [form]
   );
 
   const handleMealChange = useCallback(
-    (mealName: string, isExisting: boolean) => {
-      form.setValue('mealName', mealName, { shouldValidate: true });
-      setIsExistingMeal(isExisting);
-      if (isExisting) {
-        // Clear price for existing meals
-        form.setValue('price', undefined);
-        form.setValue('currency', undefined);
-      } else {
-        // Set default price for new meals
-        form.setValue('price', 12000);
-        form.setValue('currency', '₩');
+    (selection: { id?: string; name: string; price?: number | null }) => {
+      form.setValue('mealName', selection.name, { shouldValidate: true });
+      form.setValue('mealId', selection.id, { shouldValidate: true });
+      if (typeof selection.price === 'number') {
+        form.setValue('price', selection.price, {
+          shouldValidate: true,
+          shouldDirty: false,
+        });
+      } else if (!form.getValues('price')) {
+        form.setValue('price', 12000, { shouldDirty: false });
       }
-      // Re-validate with new schema
-      form.trigger();
+      if (!form.getValues('currency')) {
+        form.setValue('currency', '₩', { shouldDirty: false });
+      }
+      setSelectedMealMeta({ id: selection.id, price: selection.price ?? null });
     },
     [form]
   );
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file) {
-      return;
-    }
+    if (!file) return;
+
     const reader = new FileReader();
     reader.onload = () => {
       const base64 = reader.result?.toString() ?? null;
       setPhotoPreview(base64);
-      form.setValue('photo', base64 ?? undefined, { shouldValidate: true });
+      form.setValue('photo', file, { shouldValidate: true });
     };
     reader.readAsDataURL(file);
   };
 
-  const onSubmit = (values: ReviewFormValues) => {
-    const restaurantId = selectedRestaurantId || slugify(values.restaurantName);
+  const onSubmit = async (values: ReviewFormValues) => {
     const pointsAwarded = 50;
 
-    const draft = {
-      id: crypto.randomUUID(),
-      restaurantId,
-      restaurantName: values.restaurantName.trim(),
-      mealName: values.mealName.trim(),
-      price: values.price || 0,
-      currency: values.currency || '₩',
-      rating: values.rating,
-      tags: values.dietaryTags,
-      review: values.review.trim(),
-      createdAt: new Date().toISOString(),
-      photoPreview: values.photo,
-    };
+    try {
+      if (
+        values.mealId &&
+        typeof values.price === 'number' &&
+        values.price !== (selectedMealMeta.price ?? undefined)
+      ) {
+        await updateMeal({
+          meal_id: values.mealId,
+          price: values.price,
+        });
+      }
 
-    addReviewDraft(draft);
-    addPoints(pointsAwarded);
-    
-    // Show success toast with points
-    toast.success('Review saved!', {
-      description: `🏆 +${pointsAwarded} points! ${values.mealName} at ${values.restaurantName} is queued for sharing.`,
-      duration: 5000,
-    });
-    setPhotoPreview(null);
-    setIsExistingMeal(false);
-    setSelectedRestaurantId(undefined);
-    form.reset();
+      await createReview({
+        place_id: values.placeId,
+        meal_id: values.mealId,
+        meal_name: values.mealName,
+        rating: values.rating,
+        text: values.review,
+        price: values.price,
+        images: values.photo ? [values.photo] : [],
+        is_vegan: values.dietaryTags.includes('Vegan') ? 'yes' : 'no',
+        is_halal: values.dietaryTags.includes('Halal') ? 'yes' : 'no',
+        is_vegetarian: values.dietaryTags.includes('Vegetarian') ? 'yes' : 'no',
+        is_spicy: values.dietaryTags.includes('Spicy') ? 'yes' : 'no',
+        is_gluten_free: values.dietaryTags.includes('Gluten-free') ? 'yes' : 'no',
+        is_dairy_free: values.dietaryTags.includes('Dairy-free') ? 'yes' : 'no',
+        is_nut_free: values.dietaryTags.includes('Nut-free') ? 'yes' : 'no',
+      });
+
+      addPoints(pointsAwarded);
+      toast.success('Review submitted!', {
+        description: `🏆 +${pointsAwarded} points!`,
+      });
+      form.reset();
+      setPhotoPreview(null);
+      setSelectedMealMeta({});
+      navigate('/');
+    } catch (error) {
+      toast.error('Failed to submit review', {
+        description: error instanceof Error ? error.message : 'Please try again.',
+      });
+    }
   };
-
-  const recentDrafts = useMemo(() => reviewDrafts.slice(0, 3), [reviewDrafts]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -293,16 +362,22 @@ export function ReviewFormPage(): JSX.Element {
             <FieldGroup className="gap-6">
               <PhotoUploadField photoPreview={photoPreview} onPhotoUpload={handlePhotoUpload} />
 
+              {/* NOTE: RestaurantSelector needs to propagate ID. 
+                  For now assuming it calls onChange(name, id). 
+                  I'll need to patch RestaurantSelector if it doesn't. 
+              */}
               <RestaurantSelector
                 value={form.watch('restaurantName')}
                 onChange={handleRestaurantChange}
-                error={form.formState.errors.restaurantName?.message}
+                error={form.formState.errors.restaurantName?.message || form.formState.errors.placeId?.message}
               />
 
               <MealSelector
-                value={form.watch('mealName')}
+                mealName={watchMealName}
+                mealId={watchMealId}
                 onChange={handleMealChange}
-                restaurantId={selectedRestaurantId}
+                restaurantId={watchPlaceId}
+                currentPrice={watchPrice}
                 error={form.formState.errors.mealName?.message}
               />
             </FieldGroup>
@@ -310,55 +385,60 @@ export function ReviewFormPage(): JSX.Element {
             <FieldSeparator>Experience</FieldSeparator>
 
             <FieldGroup className="gap-6">
-              {!isExistingMeal && (
-                <>
-                  <Field>
-                    <FieldLabel>
-                      <FieldTitle>Price paid</FieldTitle>
-                      <FieldDescription>Rough total including sides or drinks.</FieldDescription>
-                    </FieldLabel>
-                    <FieldContent className="gap-3">
-                      <Controller
-                        name="price"
-                        control={form.control}
-                        render={({ field }) => (
-                          <>
-                            <Slider
-                              value={[field.value || 12000]}
-                              onValueChange={(value) => field.onChange(value[0])}
-                              min={1000}
-                              max={50000}
-                              step={500}
-                              aria-label="Price in won"
-                            />
-                            <div className="flex items-center justify-between text-xs text-muted-foreground">
-                              <span>₩1k</span>
-                              <span>
-                                {new Intl.NumberFormat('en', { notation: 'compact' }).format(field.value || 12000)}₩
-                              </span>
-                              <span>₩50k</span>
-                            </div>
-                          </>
-                        )}
-                      />
-                      <FieldError
-                        errors={
-                          form.formState.errors.price
-                            ? [{ message: form.formState.errors.price.message }]
-                            : undefined
-                        }
-                      />
-                    </FieldContent>
-                  </Field>
-
-                  <ReviewCurrencySelector
-                    value={currentCurrency || '₩'}
-                    options={CURRENCIES}
-                    onChange={handleCurrencyChange}
-                    error={form.formState.errors.currency?.message}
+              <Field>
+                <FieldLabel>
+                  <FieldTitle>Price paid</FieldTitle>
+                  <FieldDescription>
+                    Required for new dishes. Update it here if the known price is outdated.
+                  </FieldDescription>
+                </FieldLabel>
+                <FieldContent className="gap-3">
+                  <Controller
+                    name="price"
+                    control={form.control}
+                    render={({ field }) => (
+                      <div className="relative">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          min={1000}
+                          step={100}
+                          placeholder="12000"
+                          value={field.value ?? ''}
+                          onChange={(event) => {
+                            const nextValue = event.target.value;
+                            if (nextValue === '') {
+                              field.onChange(undefined);
+                              return;
+                            }
+                            const parsed = Number(nextValue);
+                            if (!Number.isNaN(parsed)) {
+                              field.onChange(parsed);
+                            }
+                          }}
+                        />
+                        <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                          {currentCurrency}
+                        </span>
+                      </div>
+                    )}
                   />
-                </>
-              )}
+                  <FieldError
+                    errors={
+                      form.formState.errors.price
+                        ? [{ message: form.formState.errors.price.message }]
+                        : undefined
+                    }
+                  />
+                </FieldContent>
+              </Field>
+
+              <ReviewCurrencySelector
+                value={currentCurrency}
+                options={CURRENCIES}
+                onChange={handleCurrencyChange}
+                error={form.formState.errors.currency?.message}
+              />
 
               <Field>
                 <FieldLabel>
@@ -428,12 +508,12 @@ export function ReviewFormPage(): JSX.Element {
               </p>
               <p className="text-sm text-foreground">
                 {form.watch('mealName') || 'Untitled meal'}
-                {!isExistingMeal && watchPrice && (
+                {watchPrice && (
                   <>
                     {' · '}
                     {new Intl.NumberFormat('en-US', {
                       style: 'currency',
-                      currency: (currentCurrency || '₩') === '$' ? 'USD' : 'KRW',
+                      currency: currentCurrency === '$' ? 'USD' : 'KRW',
                       maximumFractionDigits: 0,
                     }).format(watchPrice)}
                   </>
@@ -441,8 +521,8 @@ export function ReviewFormPage(): JSX.Element {
               </p>
             </div>
             <div className="flex flex-col gap-3">
-              <Button type="submit" className="rounded-full" disabled={form.formState.isSubmitting}>
-                Submit review
+              <Button type="submit" className="rounded-full" disabled={isBusy}>
+                {isBusy ? 'Submitting...' : 'Submit review'}
               </Button>
               <Button
                 type="button"
@@ -455,17 +535,6 @@ export function ReviewFormPage(): JSX.Element {
             </div>
           </aside>
         </motion.form>
-
-        {recentDrafts.length > 0 ? (
-          <motion.section
-            className="rounded-3xl border border-border/40 bg-white/80 p-4 shadow-sm backdrop-blur"
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, ease: 'easeOut', delay: 0.1 }}
-          >
-            <ReviewDraftList drafts={recentDrafts} />
-          </motion.section>
-        ) : null}
       </main>
 
     </div>

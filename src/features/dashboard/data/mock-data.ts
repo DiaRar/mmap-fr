@@ -1,9 +1,11 @@
-import type { MealRecommendation, NearbyRestaurant } from '@/features/dashboard/types';
+import type { MealRecommendation, PlaceBasicInfo } from '@/features/dashboard/types';
 
-export const mockRestaurants: NearbyRestaurant[] = [
+export const mockRestaurants: PlaceBasicInfo[] = [
   {
     id: 'solstice-supper-club',
     name: 'Solstice Supper Club',
+    latitude: 36.3738,
+    longitude: 127.3609,
     cuisine: 'Modern American',
     rating: 4.8,
     reviewCount: 312,
@@ -23,6 +25,8 @@ export const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'ember-noodle-house',
     name: 'Ember Noodle House',
+    latitude: 36.3711,
+    longitude: 127.3645,
     cuisine: 'Neo-Asian',
     rating: 4.6,
     reviewCount: 589,
@@ -42,6 +46,8 @@ export const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'horizon-coffee-lab',
     name: 'Horizon Coffee Lab',
+    latitude: 36.3732,
+    longitude: 127.3587,
     cuisine: 'Coffee & Pastry',
     rating: 4.9,
     reviewCount: 218,
@@ -61,6 +67,8 @@ export const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'marina-catch',
     name: 'Marina Catch',
+    latitude: 36.3691,
+    longitude: 127.3578,
     cuisine: 'Seafood',
     rating: 4.7,
     reviewCount: 441,
@@ -79,6 +87,8 @@ export const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'verde-taqueria',
     name: 'Verde Taqueria',
+    latitude: 36.3744,
+    longitude: 127.3622,
     cuisine: 'Modern Mexican',
     rating: 4.5,
     reviewCount: 367,
@@ -97,6 +107,8 @@ export const mockRestaurants: NearbyRestaurant[] = [
   {
     id: 'hanok-soy-house',
     name: 'Hanok Soy House',
+    latitude: 36.3753,
+    longitude: 127.3561,
     cuisine: 'Traditional Korean',
     rating: 4.4,
     reviewCount: 254,

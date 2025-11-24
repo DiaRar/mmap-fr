@@ -11,18 +11,21 @@ import { Spinner } from '@/components/ui/spinner';
 
 import { restaurantBounds, useRestaurantsQuery } from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
-import type { NearbyRestaurant } from '@/features/dashboard/types';
+import type { PlaceBasicInfo } from '@/features/dashboard/types';
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
 
-const getMarkerPosition = (restaurant: NearbyRestaurant) => {
+const getMarkerPosition = (restaurant: PlaceBasicInfo) => {
   const latRange = Math.max(restaurantBounds.maxLat - restaurantBounds.minLat, 0.005);
   const lngRange = Math.max(restaurantBounds.maxLng - restaurantBounds.minLng, 0.005);
 
+  const lat = restaurant.coordinates?.lat ?? restaurant.latitude;
+  const lng = restaurant.coordinates?.lng ?? restaurant.longitude;
+
   const x =
-    ((restaurant.coordinates.lng - restaurantBounds.minLng) / lngRange) * 100;
+    ((lng - restaurantBounds.minLng) / lngRange) * 100;
   const y =
-    ((restaurantBounds.maxLat - restaurant.coordinates.lat) / latRange) * 100;
+    ((restaurantBounds.maxLat - lat) / latRange) * 100;
 
   return {
     x: clamp(x, 5, 95),
@@ -111,9 +114,11 @@ export function MapPage(): JSX.Element {
                     >
                       <span className="inline-flex items-center gap-1 text-primary">
                         <MapPin className="size-3.5" />
-                        {restaurant.area}
+                        {restaurant.area ?? 'Nearby'}
                       </span>
-                      <span>{restaurant.rating.toFixed(1)}</span>
+                      <span>
+                        {(restaurant.rating ?? restaurant.average_rating ?? 0).toFixed(1)}
+                      </span>
                     </div>
                     <div
                       className={`mx-auto mt-2 flex size-11 items-center justify-center rounded-full border-2 shadow transition ${isActive ? 'border-primary bg-primary text-primary-foreground shadow-primary/40' : 'border-white/70 bg-white text-primary shadow-primary/10'}`}
@@ -137,7 +142,7 @@ export function MapPage(): JSX.Element {
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
                     {selectedRestaurant
-                      ? `${selectedRestaurant.cuisine} · ${selectedRestaurant.distance} away`
+                      ? `${selectedRestaurant.cuisine ?? 'Restaurant'} · ${selectedRestaurant.distance ?? formatRelativeReview(selectedRestaurant.lastReviewAt) ?? 'nearby'}`
                       : 'Tap a hotspot to see quick facts'}
                   </CardDescription>
                 </div>
@@ -146,7 +151,7 @@ export function MapPage(): JSX.Element {
                     variant="outline"
                     className="rounded-full border-primary/30 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary"
                   >
-                    {selectedRestaurant.priceRange}
+                    {selectedRestaurant.priceRange ?? '—'}
                   </Badge>
                 ) : null}
               </div>
@@ -157,7 +162,7 @@ export function MapPage(): JSX.Element {
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <Navigation className="size-4 text-primary" />
-                      {selectedRestaurant.etaMinutes} min walk
+                      {selectedRestaurant.etaMinutes ?? '—'} min walk
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="size-4 text-primary" />
@@ -168,9 +173,15 @@ export function MapPage(): JSX.Element {
                       {formatRelativeReview(selectedRestaurant.lastReviewAt) ?? 'No recent reviews'}
                     </span>
                   </div>
-                  <div className="flex flex-wrap gap-2">
-                    {selectedRestaurant.tags.concat(selectedRestaurant.dietaryTags ?? []).map(
-                      (tag) => (
+                  {[
+                    ...(selectedRestaurant.tags ?? []),
+                    ...(selectedRestaurant.dietaryTags ?? []),
+                  ].length ? (
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        ...(selectedRestaurant.tags ?? []),
+                        ...(selectedRestaurant.dietaryTags ?? []),
+                      ].map((tag) => (
                         <Badge
                           key={tag}
                           variant="outline"
@@ -178,9 +189,9 @@ export function MapPage(): JSX.Element {
                         >
                           {tag}
                         </Badge>
-                      )
-                    )}
-                  </div>
+                      ))}
+                    </div>
+                  ) : null}
                   <div className="flex flex-col gap-3 sm:flex-row">
                     <Button
                       className="flex-1 rounded-full"

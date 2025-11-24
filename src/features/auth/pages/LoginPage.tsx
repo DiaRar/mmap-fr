@@ -1,6 +1,5 @@
 import { Github, Mail } from 'lucide-react';
 import {
-  type FormEvent,
   type PointerEvent as ReactPointerEvent,
   useEffect,
   useMemo,
@@ -21,6 +20,9 @@ import {
   type Transition,
 } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -29,12 +31,22 @@ import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { AuthCard, AuthDivider, AuthFooterLink, AuthLayout } from '../components';
 import { cn } from '@/lib/utils';
+import { LoginSchema } from '../schemas';
+import { useAuthStore } from '../store/useAuthStore';
+import { toast } from 'sonner';
 
 export function LoginPage(): JSX.Element {
   const navigate = useNavigate();
+  const { login, isLoading } = useAuthStore();
 
-  const [isLoading, setIsLoading] = useState(false);
-  const pendingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<z.infer<typeof LoginSchema>>({
+    resolver: zodResolver(LoginSchema),
+  });
+
   const cardContainerRef = useRef<HTMLDivElement | null>(null);
 
   const tiltX = useMotionValue(0);
@@ -72,11 +84,14 @@ export function LoginPage(): JSX.Element {
     return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
-  const goToHome = (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    navigate('/', { replace: true });
+  const onSubmit = async (data: z.infer<typeof LoginSchema>) => {
+    try {
+      await login(data);
+      toast.success('Logged in successfully');
+      navigate('/', { replace: true });
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to login');
+    }
   };
 
   useEffect(() => {
@@ -195,15 +210,6 @@ export function LoginPage(): JSX.Element {
     sparkOpacity.set(0.35);
   };
 
-  useEffect(
-    () => () => {
-      if (pendingTimeout.current) {
-        clearTimeout(pendingTimeout.current);
-      }
-    },
-    []
-  );
-
   const socialProviders = useMemo(
     () => [
       {
@@ -219,18 +225,6 @@ export function LoginPage(): JSX.Element {
     ],
     []
   );
-
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (isLoading) {
-      return;
-    }
-
-    setIsLoading(true);
-    pendingTimeout.current = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-  };
 
   return (
     <AuthLayout>
@@ -303,7 +297,7 @@ export function LoginPage(): JSX.Element {
 
               <motion.form
                 className="space-y-5"
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit(onSubmit)}
                 initial="hidden"
                 animate="visible"
                 variants={{
@@ -332,12 +326,22 @@ export function LoginPage(): JSX.Element {
                     type="email"
                     autoComplete="email"
                     placeholder="you@example.com"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.email && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('email')}
                     onFocus={() => handleFieldFocus('email')}
-                    onBlur={() => handleFieldBlur('email')}
+                    onBlur={(e) => {
+                        register('email').onBlur(e);
+                        handleFieldBlur('email');
+                    }}
                   />
+                  {errors.email && (
+                    <p className="text-xs text-destructive mt-1">{errors.email.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -359,12 +363,22 @@ export function LoginPage(): JSX.Element {
                     type="password"
                     autoComplete="current-password"
                     placeholder="Your password"
-                    required
+                    // required
                     disabled={isLoading}
-                    className="h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm"
+                    className={cn(
+                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
+                      errors.password && "border-destructive focus-visible:ring-destructive"
+                    )}
+                    {...register('password')}
                     onFocus={() => handleFieldFocus('password')}
-                    onBlur={() => handleFieldBlur('password')}
+                    onBlur={(e) => {
+                        register('password').onBlur(e);
+                        handleFieldBlur('password');
+                    }}
                   />
+                  {errors.password && (
+                    <p className="text-xs text-destructive mt-1">{errors.password.message}</p>
+                  )}
                 </motion.div>
 
                 <motion.div
@@ -403,8 +417,7 @@ export function LoginPage(): JSX.Element {
                 >
                   <Button asChild className="w-full" disabled={isLoading}>
                     <motion.button
-                      // type="submit"
-                      onClick={goToHome}
+                      // type="submit" // handled by handleSubmit
                       disabled={isLoading}
                       whileHover={{ scale: isLoading ? 1 : 1.01 }}
                       whileTap={{ scale: isLoading ? 1 : 0.98 }}

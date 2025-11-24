@@ -1,7 +1,8 @@
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { lazy, Suspense, type JSX } from 'react';
+import { createBrowserRouter, Navigate, RouterProvider, useLocation } from 'react-router-dom';
+import { lazy, Suspense, useEffect, useState, type JSX } from 'react';
 
 import { Spinner } from '@/components/ui/spinner';
+import { useAuthStore } from '@/features/auth/store/useAuthStore';
 
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((module) => ({
@@ -45,6 +46,12 @@ const ReviewFormPage = lazy(() =>
   }))
 );
 
+const RestaurantDetailsPage = lazy(() =>
+  import('@/features/dashboard/restaurants/pages/RestaurantDetailsPage').then((module) => ({
+    default: module.RestaurantDetailsPage,
+  }))
+);
+
 function RouteSpinner(): JSX.Element {
   return (
     <div className="grid min-h-screen w-full place-items-center p-6">
@@ -53,13 +60,70 @@ function RouteSpinner(): JSX.Element {
   );
 }
 
+type GuardProps = {
+  children: JSX.Element;
+};
+
+function useAuthHydration(): boolean {
+  const [hasHydrated, setHasHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+
+  useEffect(() => {
+    const unsub = useAuthStore.persist?.onFinishHydration?.(() => {
+      setHasHydrated(true);
+    });
+
+    if (useAuthStore.persist?.hasHydrated?.()) {
+      setHasHydrated(true);
+    }
+
+    return () => {
+      unsub?.();
+    };
+  }, []);
+
+  return hasHydrated;
+}
+
+function ProtectedRoute({ children }: GuardProps): JSX.Element {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthHydration();
+  const location = useLocation();
+
+  if (!hasHydrated) {
+    return <RouteSpinner />;
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace state={{ from: location }} />;
+  }
+
+  return children;
+}
+
+function PublicOnlyRoute({ children }: GuardProps): JSX.Element {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const hasHydrated = useAuthHydration();
+
+  if (!hasHydrated) {
+    return <RouteSpinner />;
+  }
+
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+}
+
 const router = createBrowserRouter([
   {
     path: '/',
     element: (
-      <Suspense fallback={<RouteSpinner />}>
-        <DashboardShell />
-      </Suspense>
+      <ProtectedRoute>
+        <Suspense fallback={<RouteSpinner />}>
+          <DashboardShell />
+        </Suspense>
+      </ProtectedRoute>
     ),
     children: [
       {
@@ -94,22 +158,34 @@ const router = createBrowserRouter([
           </Suspense>
         ),
       },
+      {
+        path: 'restaurants/:placeId',
+        element: (
+          <Suspense fallback={<RouteSpinner />}>
+            <RestaurantDetailsPage />
+          </Suspense>
+        ),
+      },
     ],
   },
   {
     path: '/login',
     element: (
-      <Suspense fallback={<RouteSpinner />}>
-        <LoginPage />
-      </Suspense>
+      <PublicOnlyRoute>
+        <Suspense fallback={<RouteSpinner />}>
+          <LoginPage />
+        </Suspense>
+      </PublicOnlyRoute>
     ),
   },
   {
     path: '/register',
     element: (
-      <Suspense fallback={<RouteSpinner />}>
-        <RegisterPage />
-      </Suspense>
+      <PublicOnlyRoute>
+        <Suspense fallback={<RouteSpinner />}>
+          <RegisterPage />
+        </Suspense>
+      </PublicOnlyRoute>
     ),
   },
 ]);
