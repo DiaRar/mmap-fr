@@ -1,6 +1,7 @@
 import type { GeoPoint } from '@/features/dashboard/types';
 
 const NOMINATIM_REVERSE_ENDPOINT = 'https://nominatim.openstreetmap.org/reverse';
+const MAX_LABEL_LENGTH = 32;
 
 type Address = {
   name?: string;
@@ -70,12 +71,12 @@ function formatStreet(address?: Address | null) {
 
 function buildLabel(payload: NominatimReverseResponse, coords: GeoPoint): string {
   if (!payload) {
-    return `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
+    return formatFallback(coords);
   }
 
   const name = payload.name?.trim();
   if (name) {
-    return name;
+    return truncateLabel(name);
   }
 
   const address = payload.address;
@@ -84,16 +85,20 @@ function buildLabel(payload: NominatimReverseResponse, coords: GeoPoint): string
     .map((value) => value.trim())
     .find((value) => value.length > 0);
   if (building) {
-    return building;
+    return truncateLabel(building);
   }
 
   const displayPrimary = payload.display_name?.split(',')[0]?.trim();
-  if (displayPrimary) return displayPrimary;
+  if (displayPrimary) {
+    return truncateLabel(displayPrimary);
+  }
 
   const street = formatStreet(address);
-  if (street) return street;
+  if (street) {
+    return truncateLabel(street);
+  }
 
-  return `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
+  return formatFallback(coords);
 }
 
 export async function reverseGeocode(point: GeoPoint): Promise<string> {
@@ -118,4 +123,16 @@ export async function reverseGeocode(point: GeoPoint): Promise<string> {
 
   const data = (await response.json()) as NominatimReverseResponse;
   return buildLabel(data, point);
+}
+
+function truncateLabel(label: string): string {
+  if (label.length <= MAX_LABEL_LENGTH) {
+    return label;
+  }
+  return `${label.slice(0, MAX_LABEL_LENGTH - 3).trimEnd()}...`;
+}
+
+function formatFallback(coords: GeoPoint): string {
+  const fallback = `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
+  return truncateLabel(fallback);
 }
