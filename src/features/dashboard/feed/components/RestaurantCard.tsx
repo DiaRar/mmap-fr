@@ -16,7 +16,8 @@ import { Link } from 'react-router-dom';
 
 import type { PlaceBasicInfo } from '../../types';
 
-const MAX_TITLE_LENGTH = 30;
+const MOBILE_TITLE_LENGTH = 22;
+const DESKTOP_TITLE_LENGTH = 30;
 
 function formatRelativeReview(date?: string): string | null {
   if (!date) {
@@ -242,7 +243,12 @@ export function RestaurantCard({
   );
 }
 
-function truncateTitle(value: string, maxLength = MAX_TITLE_LENGTH): string {
+function truncateTitle(value: string): string {
+  const maxLength =
+    typeof window !== 'undefined' && window.matchMedia('(max-width: 380px)').matches
+      ? MOBILE_TITLE_LENGTH
+      : DESKTOP_TITLE_LENGTH;
+
   if (value.length <= maxLength) {
     return value;
   }
