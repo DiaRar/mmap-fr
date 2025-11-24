@@ -12,6 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Link } from 'react-router-dom';
 
 import type { PlaceBasicInfo } from '../../types';
 
@@ -68,7 +69,12 @@ export function RestaurantCard({
 }: RestaurantCardProps): JSX.Element {
   const lastReview = formatRelativeReview(restaurant.lastReviewAt);
   const queueMinutes = restaurant.queueEstimateMinutes ?? 10;
-  const ratingValue = restaurant.rating ?? restaurant.average_rating;
+  const ratingValue =
+    typeof restaurant.rating === 'number'
+      ? restaurant.rating
+      : typeof restaurant.average_rating === 'number'
+        ? restaurant.average_rating
+        : undefined;
   const reviewCount = restaurant.reviewCount ?? restaurant.review_count;
   const distanceLabel = restaurant.distance ?? formatDistance(restaurant.distance_meters);
   const cuisineLabel = formatCuisine(restaurant.cuisine);
@@ -138,7 +144,7 @@ export function RestaurantCard({
               {areaLabel ?? 'Nearby'}
             </span>
           </span>
-          {ratingValue !== undefined ? (
+          {typeof ratingValue === 'number' ? (
             <Badge
               variant="outline"
               className="inline-flex items-center gap-1 rounded-full border-primary/20 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary"
@@ -220,11 +226,14 @@ export function RestaurantCard({
           <p className="text-xs">Latest review {lastReview ?? 'pending'}</p>
         </div>
         <Button
+          asChild
           variant="secondary"
           size="sm"
           className="rounded-full px-4 transition-transform duration-300 group-hover:translate-x-0.5"
         >
-          View
+          <Link to={`/restaurants/${restaurant.id}`} aria-label={`View ${restaurant.name} details`}>
+            View
+          </Link>
         </Button>
       </CardFooter>
     </Card>

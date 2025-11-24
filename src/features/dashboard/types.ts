@@ -94,11 +94,11 @@ export interface PlaceBasicInfo {
   address?: string;
   image_count?: number;
   first_image?: BackendImageResponse;
-  distance_meters?: number;
-  average_rating?: number;
-  review_count?: number;
-  cuisine?: string;
-  test_id?: string;
+  distance_meters?: number | null;
+  average_rating?: number | null;
+  review_count?: number | null;
+  cuisine?: string | null;
+  test_id?: string | null;
   // Frontend-only enriched data (from mocks or future endpoints)
   rating?: number;
   reviewCount?: number;
@@ -116,6 +116,18 @@ export interface PlaceBasicInfo {
   isPopular?: boolean;
 }
 
+export interface PlaceDetails extends PlaceBasicInfo {
+  image_count: number;
+  images: BackendImageResponse[];
+  created_at: string;
+  updated_at: string;
+  distance_meters?: number | null;
+  average_rating?: number | null;
+  review_count?: number | null;
+  test_id?: string | null;
+  cuisine?: string | null;
+}
+
 export interface UserBasicInfo {
   id: string;
   first_name?: string;
@@ -125,6 +137,7 @@ export interface UserBasicInfo {
 
 export interface ReviewResponse {
   id: string;
+  meal_id: string;
   meal_name: string;
   rating: number;
   text?: string;
@@ -143,7 +156,7 @@ export interface ReviewResponse {
   place: PlaceBasicInfo;
   user: UserBasicInfo;
   created_at: string;
-  distance_meters?: number;
+  distance_meters?: number | null;
 }
 
 export interface MealTags {

@@ -1,5 +1,5 @@
-import { useCallback, useState, type JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState, type JSX } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm, Controller } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -116,6 +116,15 @@ export function ReviewFormPage(): JSX.Element {
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [selectedMealMeta, setSelectedMealMeta] = useState<{ id?: string; price?: number | null }>({});
+  const location = useLocation();
+  const reviewContext = location.state as
+    | {
+        placeId?: string;
+        restaurantName?: string;
+        mealId?: string;
+        mealName?: string;
+      }
+    | undefined;
 
   const form = useForm<ReviewFormValues>({
     resolver: zodResolver(reviewFormSchema),
@@ -133,6 +142,34 @@ export function ReviewFormPage(): JSX.Element {
       photo: undefined,
     },
   });
+
+  useEffect(() => {
+    if (!reviewContext) {
+      return;
+    }
+
+    if (reviewContext.placeId) {
+      form.setValue('placeId', reviewContext.placeId, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.restaurantName) {
+      form.setValue('restaurantName', reviewContext.restaurantName, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
+    }
+    if (reviewContext.mealId) {
+      form.setValue('mealId', reviewContext.mealId, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.mealName) {
+      form.setValue('mealName', reviewContext.mealName, { shouldDirty: false, shouldValidate: true });
+    }
+    if (reviewContext.mealId || reviewContext.mealName) {
+      setSelectedMealMeta((prev) => ({
+        ...prev,
+        id: reviewContext.mealId,
+      }));
+    }
+  }, [form, reviewContext]);
 
   const watchPrice = form.watch('price');
   const currentRating = form.watch('rating');

@@ -1,4 +1,6 @@
 # Frontend TODO (mmap-gay/mmap)
+### Swagger docs
+- You can find api docs at `docs/openapi.json`.
 
 ## RestaurantSearch.tsx - dynamic location
 - [ ] Replace the hard-coded `"KAIST W8..."` copy in `RestaurantSearch.tsx` with data from the existing `useLocation()` hook so the badge always reflects the user’s actual coordinates. Surface three explicit states (loading, resolved, permission denied) so the UI doesn’t get stuck showing stale information.
@@ -13,9 +15,13 @@
 - [x] Ensure the final `useCreateReview()` call posts a `FormData` payload to `POST /reviews` that always includes either `meal_id` or (`place_id` + `meal_name`) plus the typed `price` and uploaded images. After success invalidate `['places']`, `['meals', place_id]`, and `['reviews', meal_id]` queries so the feed/details views refresh.
 
 ## Restaurant details flow
-- [ ] Add a `/restaurants/:placeId` route in `src/app/routes.tsx` along with a dedicated page (e.g., `RestaurantDetailsPage.tsx`) that fetches `GET /places/{place_id}` for the hero card, `GET /meals?place_id=` for the meal list, and `GET /reviews?place_id=` for recent feedback.
-- [ ] Update `RestaurantCard.tsx` so the “View” button fires `navigate('/restaurants/<id>')` (pass `restaurant.id` through `RestaurantList` props). Keep keyboard accessibility (e.g., convert to `<Button asChild>` around a `<Link>` or wire up `onKeyDown`).
-- [ ] On the details page, render meals as an accordion/list where each meal row can expand to show its reviews or ratings breakdown. Reuse the dietary tags and upload gallery components so reviewers can quickly jump from the detail view straight into the submission form for that restaurant.
+- [x] Add a `/restaurants/:placeId` route in `src/app/routes.tsx` along with a dedicated page (e.g., `RestaurantDetailsPage.tsx`) that fetches `GET /places/{place_id}` for the hero card, `GET /meals?place_id=` for the meal list, and `GET /reviews?place_id=` for recent feedback.
+- [x] Update `RestaurantCard.tsx` so the “View” button fires `navigate('/restaurants/<id>')` (pass `restaurant.id` through `RestaurantList` props). Keep keyboard accessibility (e.g., convert to `<Button asChild>` around a `<Link>` or wire up `onKeyDown`).
+- [x] On the details page, render meals as an accordion/list where each meal row can expand to show its reviews or ratings breakdown. Reuse the dietary tags and upload gallery components so reviewers can quickly jump from the detail view straight into the submission form for that restaurant.
+
+## Meal details flow
+- [ ] Introduce a `/meals/:mealId` route + page focused on a single dish: show price trends, dietary tags, wait-time history, and the full review feed filtered to that meal.
+- [ ] Wire the RestaurantDetailsPage accordion and any meal chips elsewhere so they deep-link into the meal details route (pass the selected meal context to the submission form as well).
 
 ## Recommendations & swipes
 - [ ] Replace the mock data in `useRecommendationsQuery` (`src/features/dashboard/data/hooks.ts`) with a real request to `GET /users/me/feed` so `RecommendationCard.tsx` displays live meals from the backend (`MealResponse` objects with `first_image.image_url`, `avg_rating`, `tags`, etc.). Update `MealRecommendation` typing or add a mapper to keep the UI props consistent.
@@ -26,7 +32,7 @@
 - [ ] The feed currently renders a single page from `usePlaces` without pagination or “load more”. Implement cursor or page-based loading using the `Page<PlaceResponse>` metadata returned by `/places` (expose “Load older spots” button or infinite scroll) and pass `page` into the hook so users can browse beyond the first ten results.
 
 ## Priority order
-1. Restaurant details flow
+1. Meal details flow
 2. Recommendations & swipes
 3. RestaurantSearch.tsx – dynamic location
 4. Additional items identified during review
