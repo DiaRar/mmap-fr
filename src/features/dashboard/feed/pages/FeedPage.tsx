@@ -17,7 +17,7 @@ import { RestaurantSearch } from '../components/RestaurantSearch';
 const quickInsights = [
   { label: 'Saved spots', value: '12' },
   { label: 'Halal nearby', value: '4' },
-  { label: 'Queue under 10m', value: '6' },
+  { label: 'Wait-time under 10m', value: '6' },
   { label: 'New this week', value: '2' },
 ];
 
