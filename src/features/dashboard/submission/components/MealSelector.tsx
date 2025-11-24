@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, useEffect, type JSX } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Check, ChevronsUpDown, Plus, Utensils } from 'lucide-react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -79,6 +80,7 @@ export function MealSelector({
   const [searchTerm, setSearchTerm] = useState('');
   const debouncedSearch = useDebouncedValue(searchTerm, 300);
   const isMobile = useIsMobile();
+  const navigate = useNavigate();
   const { data: mealsPage, isFetching } = useMeals({
     placeId: restaurantId,
     searchTerm: debouncedSearch,
@@ -129,6 +131,18 @@ export function MealSelector({
       toast.error(message);
     }
   }, [createMeal, currentPrice, handleSelect, newMealName, restaurantId]);
+
+  const handleViewMealDetails = useCallback(() => {
+    if (!selectedMeal?.id) {
+      return;
+    }
+    navigate(`/meals/${selectedMeal.id}`, {
+      state: {
+        placeId: restaurantId,
+        mealName: selectedMeal.name,
+      },
+    });
+  }, [navigate, restaurantId, selectedMeal]);
 
   const CommandContent = (
     <>
@@ -285,6 +299,18 @@ export function MealSelector({
     </Button>
   );
 
+  const detailsLink = selectedMeal?.id ? (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      className="h-7 px-0 text-xs font-semibold text-primary"
+      onClick={handleViewMealDetails}
+    >
+      View meal insights
+    </Button>
+  ) : null;
+
   if (isMobile) {
     return (
       <Field>
@@ -306,6 +332,7 @@ export function MealSelector({
               </div>
             </DrawerContent>
           </Drawer>
+          {detailsLink}
           <FieldError
             errors={error ? [{ message: error }] : undefined}
           />
@@ -327,6 +354,7 @@ export function MealSelector({
             <Command shouldFilter={false}>{CommandContent}</Command>
           </PopoverContent>
         </Popover>
+        {detailsLink}
         <FieldError
           errors={error ? [{ message: error }] : undefined}
         />

@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiRequest } from '@/lib/api';
-import type { MealResponse, ObjectCreationResponse, Page } from '@/features/dashboard/types';
+import { useLocation } from '@/features/dashboard/hooks/useLocation';
+import type {
+  MealDetailedResponse,
+  MealResponse,
+  ObjectCreationResponse,
+  Page,
+  ReviewResponse,
+} from '@/features/dashboard/types';
 
 interface UseMealsOptions {
   placeId?: string;
@@ -26,6 +33,65 @@ export function useMeals({
       params.append('page', page.toString());
       params.append('page_size', pageSize.toString());
       return apiRequest<Page<MealResponse>>(`/meals?${params.toString()}`);
+    },
+  });
+}
+
+interface UseMealDetailsOptions {
+  mealId?: string;
+}
+
+export function useMealDetails({ mealId }: UseMealDetailsOptions) {
+  const { userLocation } = useLocation();
+
+  return useQuery({
+    queryKey: ['meal-details', mealId, userLocation?.lat, userLocation?.lng],
+    enabled: Boolean(mealId),
+    queryFn: async () => {
+      if (!mealId) {
+        throw new Error('Missing meal id');
+      }
+
+      const params = new URLSearchParams();
+      if (typeof userLocation?.lat === 'number') {
+        params.append('lat', userLocation.lat.toString());
+      }
+      if (typeof userLocation?.lng === 'number') {
+        params.append('long', userLocation.lng.toString());
+      }
+
+      const search = params.toString();
+      const endpoint = search ? `/meals/${mealId}?${search}` : `/meals/${mealId}`;
+      return apiRequest<MealDetailedResponse>(endpoint);
+    },
+  });
+}
+
+interface UseMealReviewsOptions {
+  mealId?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+export function useMealReviews({
+  mealId,
+  page = 1,
+  pageSize = 10,
+}: UseMealReviewsOptions) {
+  return useQuery({
+    queryKey: ['reviews', 'meal', mealId, page, pageSize],
+    enabled: Boolean(mealId),
+    queryFn: async () => {
+      if (!mealId) {
+        throw new Error('Missing meal id');
+      }
+
+      const params = new URLSearchParams();
+      params.append('meal_id', mealId);
+      params.append('page', page.toString());
+      params.append('page_size', pageSize.toString());
+
+      return apiRequest<Page<ReviewResponse>>(`/reviews?${params.toString()}`);
     },
   });
 }
