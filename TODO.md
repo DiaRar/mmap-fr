@@ -3,9 +3,9 @@
 - You can find api docs at `docs/openapi.toon`.
 
 ## RestaurantSearch.tsx - dynamic location
-- [ ] Replace the hard-coded `"KAIST W8..."` copy in `RestaurantSearch.tsx` with data from the existing `useLocation()` hook so the badge always reflects the user’s actual coordinates. Surface three explicit states (loading, resolved, permission denied) so the UI doesn’t get stuck showing stale information.
-- [ ] Add a lightweight reverse-geocode helper (can hit OpenStreetMap/Nominatim or an internal endpoint if available) that converts `GeoPoint` from `useMealmapStore` into a readable neighborhood/building label. Cache the resolved string in the store so other surfaces (map, headers) can reuse it.
-- [ ] Provide a manual “Set location” fallback (e.g., dialog linked to the badge) for users who block geolocation. Persist the chosen coordinates in `useMealmapStore` and feed them to `usePlaces` so backend queries always include real `lat`/`long` values instead of the current `0,0` defaults.
+- [x] Replace the hard-coded `"KAIST W8..."` copy in `RestaurantSearch.tsx` with data from the existing `useLocation()` hook so the badge always reflects the user’s actual coordinates. Surface three explicit states (loading, resolved, permission denied) so the UI doesn’t get stuck showing stale information.
+- [x] Add a lightweight reverse-geocode helper (can hit OpenStreetMap/Nominatim or an internal endpoint if available) that converts `GeoPoint` from `useMealmapStore` into a readable neighborhood/building label. Cache the resolved string in the store so other surfaces (map, headers) can reuse it.
+- [x] Provide a manual “Set location” fallback (e.g., dialog linked to the badge) for users who block geolocation. Persist the chosen coordinates in `useMealmapStore` and feed them to `usePlaces` so backend queries always include real `lat`/`long` values instead of the current `0,0` defaults.
 
 ## ReviewFormPage + selectors – price input & endpoint wiring
 - [x] Convert the “Price paid” control in `ReviewFormPage.tsx` from the slider at lines ~316–347 into a numeric/input-plus-currency widget so users can type the exact amount they paid. Keep validation aligned with the backend (`min ₩1,000`, optional upper bound) and reflect the chosen currency symbol from `ReviewCurrencySelector`.
@@ -32,5 +32,4 @@
 - [ ] The feed currently renders a single page from `usePlaces` without pagination or “load more”. Implement cursor or page-based loading using the `Page<PlaceResponse>` metadata returned by `/places` (expose “Load older spots” button or infinite scroll) and pass `page` into the hook so users can browse beyond the first ten results.
 
 ## Priority order
-1. RestaurantSearch.tsx – dynamic location
-2. Additional items identified during review
+1. Additional items identified during review
