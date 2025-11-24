@@ -36,7 +36,6 @@ export function RestaurantSearch({
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [manualLat, setManualLat] = useState('');
   const [manualLng, setManualLng] = useState('');
-  const [manualLabel, setManualLabel] = useState('');
   const [manualError, setManualError] = useState<string | null>(null);
 
   const setUserLocation = useMealmapStore((state) => state.setUserLocation);
@@ -61,12 +60,6 @@ export function RestaurantSearch({
       setManualLng(userLocation.lng.toFixed(6));
     }
   }, [userLocation]);
-
-  useEffect(() => {
-    if (locationLabel) {
-      setManualLabel(locationLabel);
-    }
-  }, [locationLabel]);
 
   const handleFilterClick = useCallback((filter: string) => {
     setActiveFilters((current) => {
@@ -160,17 +153,12 @@ export function RestaurantSearch({
       return;
     }
 
-    const trimmedLabel = manualLabel.trim();
     const coords = { lat, lng };
 
     setUserLocation(coords, { source: 'manual' });
-    if (trimmedLabel) {
-      setLocationLabel(trimmedLabel, coords);
-    } else {
-      setLocationLabel(null, null);
-    }
+    setLocationLabel(null, null);
     setIsDialogOpen(false);
-  }, [manualLat, manualLng, manualLabel, setLocationLabel, setUserLocation]);
+  }, [manualLat, manualLng, setLocationLabel, setUserLocation]);
 
   return (
     <>
@@ -184,16 +172,6 @@ export function RestaurantSearch({
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="location-label-input">Label</Label>
-              <Input
-                id="location-label-input"
-                placeholder="KAIST W8, 3rd floor"
-                value={manualLabel}
-                onChange={(event) => setManualLabel(event.currentTarget.value)}
-              />
-            </div>
-
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="grid gap-2">
                 <Label htmlFor="manual-lat">Latitude</Label>

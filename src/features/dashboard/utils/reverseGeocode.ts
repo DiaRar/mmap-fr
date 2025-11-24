@@ -33,25 +33,18 @@ type Address = {
 };
 
 interface NominatimReverseResponse {
+  name?: string;
   display_name?: string;
   address?: Address;
 }
 
-const SPECIFIC_FIELDS: Array<keyof Address> = [
-  'shop',
-  'restaurant',
-  'cafe',
-  'amenity',
-  'office',
-  'commercial',
-];
-
-const GENERIC_FIELDS: Array<keyof Address> = [
+const BUILDING_FIELDS: Array<keyof Address> = [
   'building',
   'public_building',
+  'commercial',
   'campus',
   'university',
-  'name',
+  'office',
 ];
 
 const STREET_FIELDS: Array<keyof Address> = [
@@ -80,22 +73,22 @@ function buildLabel(payload: NominatimReverseResponse, coords: GeoPoint): string
     return `${coords.lat.toFixed(3)}, ${coords.lng.toFixed(3)}`;
   }
 
-  const address = payload.address;
-  const pick = (fields: Array<keyof Address>) =>
-    fields
-      .map((field) => address?.[field])
-      .filter((value): value is string => typeof value === 'string')
-      .map((value) => value.trim())
-      .find((value) => value.length > 0);
+  const name = payload.name?.trim();
+  if (name) {
+    return name;
+  }
 
-  const specific = pick(SPECIFIC_FIELDS);
-  if (specific) return specific;
+  const address = payload.address;
+  const building = BUILDING_FIELDS.map((field) => address?.[field])
+    .filter((value): value is string => typeof value === 'string')
+    .map((value) => value.trim())
+    .find((value) => value.length > 0);
+  if (building) {
+    return building;
+  }
 
   const displayPrimary = payload.display_name?.split(',')[0]?.trim();
   if (displayPrimary) return displayPrimary;
-
-  const generic = pick(GENERIC_FIELDS);
-  if (generic) return generic;
 
   const street = formatStreet(address);
   if (street) return street;
