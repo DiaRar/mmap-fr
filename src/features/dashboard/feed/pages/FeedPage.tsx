@@ -3,13 +3,14 @@ import { Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 // import { Card, CardContent } from '@/components/ui/card';
 
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
-import { usePlaces } from '@/features/dashboard/data/hooks';
+import { useInfinitePlaces } from '@/features/dashboard/data/hooks';
 import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
 import { RestaurantList } from '../components/RestaurantList';
 import { RestaurantSearch } from '../components/RestaurantSearch';
@@ -29,7 +30,13 @@ export function FeedPage(): JSX.Element {
   const setSearchTerm = useMealmapStore((state) => state.setSearchTerm);
   const bookmarkedIds = useMealmapStore((state) => state.bookmarkedIds);
 
-  const { data: placesPage, isPending } = usePlaces({
+  const {
+    data: placesPages,
+    isPending,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+  } = useInfinitePlaces({
     searchTerm: searchTerm,
     // radius_m: 5000 // Optional: limit to 5km if location available
   });
@@ -38,6 +45,12 @@ export function FeedPage(): JSX.Element {
     () => Object.values(bookmarkedIds).filter(Boolean).length,
     [bookmarkedIds]
   );
+
+  const restaurants = useMemo(() => {
+    return (placesPages?.pages ?? []).flatMap((page) => page.results ?? []);
+  }, [placesPages]);
+
+  const loadMoreLabel = hasNextPage ? 'Load more spots' : 'No more places to show';
 
   return (
     <div className="flex flex-1 flex-col">
@@ -98,7 +111,22 @@ export function FeedPage(): JSX.Element {
                 <Spinner />
               </div>
             ) : (
-              <RestaurantList restaurants={placesPage?.results || []} />
+              <>
+                <RestaurantList restaurants={restaurants} />
+                {restaurants.length > 0 && (
+                  <div className="mt-3 flex items-center justify-center">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      disabled={!hasNextPage || isFetchingNextPage}
+                      onClick={() => fetchNextPage()}
+                    >
+                      {isFetchingNextPage && <Spinner className="mr-2 size-4" />}
+                      {loadMoreLabel}
+                    </Button>
+                  </div>
+                )}
+              </>
             )}
           </div>
           <Separator className="bg-border/60 lg:hidden" />

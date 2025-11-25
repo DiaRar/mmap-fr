@@ -37,8 +37,8 @@
 
 ## Additional items identified during review
 
-- [ ] The feed currently renders a single page from `usePlaces` without pagination or “load more”. Implement cursor or page-based loading using the `Page<PlaceResponse>` metadata returned by `/places` (expose “Load older spots” button or infinite scroll) and pass `page` into the hook so users can browse beyond the first ten results.
+- [x] The feed currently renders a single page from `usePlaces` without pagination or “load more”. Implement cursor or page-based loading using the `Page<PlaceResponse>` metadata returned by `/places` (expose “Load older spots” button or infinite scroll) and pass `page` into the hook so users can browse beyond the first ten results.
 
 ## Priority order
 
-1. Additional items identified during review
+1. Backlog clear — add new items as they arise
