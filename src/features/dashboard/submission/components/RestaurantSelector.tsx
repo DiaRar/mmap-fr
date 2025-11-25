@@ -30,7 +30,8 @@ import {
 } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
 
-import { usePlaces, useCreatePlace } from '@/features/dashboard/feed/api';
+import { usePlaces } from '@/features/dashboard/data/hooks';
+import { useCreatePlace } from '@/features/dashboard/feed/api';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { useDebouncedValue } from '@/lib/hooks/useDebouncedValue';
 

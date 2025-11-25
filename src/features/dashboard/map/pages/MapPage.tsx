@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 
-import { restaurantBounds, useRestaurantsQuery } from '@/features/dashboard/data/hooks';
+import { restaurantBounds, usePlaces } from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import type { PlaceBasicInfo } from '@/features/dashboard/types';
 
@@ -246,8 +246,18 @@ function formatRelativeReview(date?: string) {
   return `${days}d ago`;
 }
 
+function formatDistanceLocal(meters?: number | null): string | undefined {
+  if (typeof meters !== 'number' || Number.isNaN(meters)) return undefined;
+  if (meters <= 0) return 'Nearby';
+  const km = meters / 1000;
+  const distanceLabel = km >= 1 ? `${km.toFixed(1)} km` : `${Math.round(meters)} m`;
+  const minutes = Math.max(1, Math.round(meters / 80));
+  return `${distanceLabel} · ${minutes} min`;
+}
+
 export function MapPage(): JSX.Element {
-  const { data: restaurants = [], isPending } = useRestaurantsQuery();
+  const { data: placesPage, isPending } = usePlaces();
+  const restaurants = placesPage?.results ?? [];
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const selectedRestaurantId = useMealmapStore((state) => state.selectedRestaurantId);
   const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
@@ -368,7 +378,11 @@ export function MapPage(): JSX.Element {
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
                     {selectedRestaurant
-                      ? `${selectedRestaurant.cuisine ?? 'Restaurant'} · ${selectedRestaurant.distance ?? formatRelativeReview(selectedRestaurant.lastReviewAt) ?? 'nearby'}`
+                      ? `${selectedRestaurant.cuisine ?? 'Restaurant'} · ${
+                          formatDistanceLocal(selectedRestaurant.distance_meters) ??
+                          formatRelativeReview(selectedRestaurant.lastReviewAt) ??
+                          'nearby'
+                        }`
                       : 'Tap a hotspot to see quick facts'}
                   </CardDescription>
                 </div>
@@ -388,14 +402,17 @@ export function MapPage(): JSX.Element {
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <MapPin className="size-5" />
-                      {selectedRestaurant.area ?? 'Address not available'}
+                      {selectedRestaurant.address ?? 'Address not available'}
                       {selectedRoad ? `, ${selectedRoad}` : ''}
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-3 text-sm text-muted-foreground">
                     <span className="inline-flex items-center gap-1.5">
                       <Navigation className="size-4 text-primary" />
-                      {selectedRestaurant.etaMinutes ?? '—'} min walk
+                      {(typeof selectedRestaurant.distance_meters === 'number'
+                        ? Math.max(1, Math.round(selectedRestaurant.distance_meters / 80))
+                        : undefined) ?? '—'}{' '}
+                      min walk
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="size-4 text-primary" />
