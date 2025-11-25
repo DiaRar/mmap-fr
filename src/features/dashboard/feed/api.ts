@@ -36,7 +36,7 @@ export function usePlaces(options: UsePlacesOptions = {}) {
       }
 
       params.append('sort_by', 'distance');
-      params.append('sort_order', 'desc');
+      params.append('sort_order', 'asc');
 
       return apiRequest<Page<PlaceBasicInfo>>(`/places?${params.toString()}`);
     },
