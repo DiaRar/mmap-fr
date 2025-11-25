@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 
 import { apiRequest } from '@/lib/api';
 import { mockRestaurants } from '@/features/dashboard/data/mock-data';
@@ -32,23 +32,58 @@ export function usePlaces(options: UsePlacesOptions = {}) {
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const params = new URLSearchParams();
-      if (lat !== undefined && lat !== null) params.append('lat', lat.toString());
-      if (lng !== undefined && lng !== null) params.append('long', lng.toString());
-      if (options.radius_m) params.append('radius_meters', options.radius_m.toString());
-      if (options.page) params.append('page', options.page.toString());
-      if (options.size) params.append('page_size', options.size.toString());
-
-      if (options.searchTerm) {
-        params.append('name', options.searchTerm);
-      }
-
-      params.append('sort_by', 'distance');
-      params.append('sort_order', 'asc');
-
+      const params = buildPlacesParams({ ...options, page: options.page ?? 1 }, lat, lng);
       return apiRequest<Page<PlaceBasicInfo>>(`/places?${params.toString()}`);
     },
     enabled: true,
+  });
+}
+
+interface BuildPlacesParamsOptions extends UsePlacesOptions {
+  page: number;
+}
+
+const buildPlacesParams = (
+  options: BuildPlacesParamsOptions,
+  lat?: number | null,
+  lng?: number | null
+) => {
+  const params = new URLSearchParams();
+  if (lat !== undefined && lat !== null) params.append('lat', lat.toString());
+  if (lng !== undefined && lng !== null) params.append('long', lng.toString());
+  if (options.radius_m) params.append('radius_meters', options.radius_m.toString());
+  if (options.page) params.append('page', options.page.toString());
+  if (options.size) params.append('page_size', options.size.toString());
+
+  if (options.searchTerm) {
+    params.append('name', options.searchTerm);
+  }
+
+  params.append('sort_by', 'distance');
+  params.append('sort_order', 'asc');
+
+  return params;
+};
+
+export function useInfinitePlaces(options: UsePlacesOptions = {}) {
+  const { userLocation } = useLocation();
+  const lat = options.lat ?? userLocation?.lat ?? 0;
+  const lng = options.lng ?? userLocation?.lng ?? 0;
+
+  const { page: initialPage = 1, ...restOptions } = options;
+
+  return useInfiniteQuery<Page<PlaceBasicInfo>, Error>({
+    queryKey: ['places', 'infinite', { ...restOptions, lat, lng }],
+    initialPageParam: initialPage,
+    getNextPageParam: (lastPage) => {
+      const nextPage = lastPage.current_page + 1;
+      return nextPage <= lastPage.total_pages ? nextPage : undefined;
+    },
+    queryFn: async ({ pageParam = initialPage }) => {
+      const page = typeof pageParam === 'number' ? pageParam : initialPage;
+      const params = buildPlacesParams({ ...options, page }, lat, lng);
+      return apiRequest<Page<PlaceBasicInfo>>(`/places?${params.toString()}`);
+    },
   });
 }
 
