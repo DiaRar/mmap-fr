@@ -5,7 +5,7 @@ import { motion } from 'motion/react';
 
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
-import { Card, CardContent } from '@/components/ui/card';
+// import { Card, CardContent } from '@/components/ui/card';
 
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
@@ -14,12 +14,12 @@ import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
 import { RestaurantList } from '../components/RestaurantList';
 import { RestaurantSearch } from '../components/RestaurantSearch';
 
-const quickInsights = [
-  { label: 'Saved spots', value: '12' },
-  { label: 'Halal nearby', value: '4' },
-  { label: 'Wait-time under 10m', value: '6' },
-  { label: 'New this week', value: '2' },
-];
+// const quickInsights = [
+//   { label: 'Saved spots', value: '12' },
+//   { label: 'Halal nearby', value: '4' },
+//   { label: 'Wait-time under 10m', value: '6' },
+//   { label: 'New this week', value: '2' },
+// ];
 
 export function FeedPage(): JSX.Element {
   const navigate = useNavigate();
@@ -64,7 +64,7 @@ export function FeedPage(): JSX.Element {
               </p>
             </div>
             <RestaurantSearch value={searchTerm} onChange={setSearchTerm} />
-            <div className="grid grid-cols-2 gap-2 pt-2 text-sm sm:grid-cols-4">
+            {/* <div className="grid grid-cols-2 gap-2 pt-2 text-sm sm:grid-cols-4">
               {quickInsights.map((item) => (
                 <Card
                   key={item.label}
@@ -78,7 +78,7 @@ export function FeedPage(): JSX.Element {
                   </CardContent>
                 </Card>
               ))}
-            </div>
+            </div> */}
           </header>
 
           <div className="hidden lg:block">
