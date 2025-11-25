@@ -23,7 +23,11 @@ import {
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { RecommendationCard } from '@/features/dashboard/recommendations/components/RecommendationCard';
 import { useCreateSwipeMutation } from '@/features/dashboard/recommendations/api';
-import type { MealRecommendation, RecommendationResponse } from '@/features/dashboard/types';
+import type {
+  MealRecommendation,
+  PlaceBasicInfo,
+  RecommendationResponse,
+} from '@/features/dashboard/types';
 
 const RECOMMENDATION_BATCH_SIZE = 5;
 
@@ -36,15 +40,18 @@ const generateSessionId = (): string => {
 
 export function RecommendationsPage(): JSX.Element {
   const navigate = useNavigate();
+  const { userLocation } = useLocation();
   const {
     data: initialBatch = [],
     isPending,
     error,
     refetch,
-  } = useRecommendationsQuery({ limit: RECOMMENDATION_BATCH_SIZE });
+  } = useRecommendationsQuery({
+    limit: RECOMMENDATION_BATCH_SIZE,
+    lat: userLocation?.lat,
+    long: userLocation?.lng,
+  });
   const [recommendations, setRecommendations] = useState<MealRecommendation[]>(initialBatch);
-
-  const { userLocation } = useLocation();
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [swipeIntent, setSwipeIntent] = useState<RecommendationResponse | null>(null);
@@ -136,6 +143,64 @@ export function RecommendationsPage(): JSX.Element {
   // it will load when it becomes active.
   const nextRestaurantName =
     nextRecommendation?.restaurantName ?? nextRecommendation?.restaurantId ?? 'Loading...';
+
+  const computeDistanceMeters = useCallback(
+    (restaurant?: PlaceBasicInfo) => {
+      if (
+        !userLocation ||
+        !restaurant ||
+        typeof restaurant.latitude !== 'number' ||
+        typeof restaurant.longitude !== 'number'
+      ) {
+        return undefined;
+      }
+
+      const toRadians = (value: number) => (value * Math.PI) / 180;
+      const earthRadius = 6371000; // meters
+
+      const lat1 = toRadians(userLocation.lat);
+      const lat2 = toRadians(restaurant.latitude);
+      const deltaLat = toRadians(restaurant.latitude - userLocation.lat);
+      const deltaLng = toRadians(restaurant.longitude - userLocation.lng);
+
+      const a =
+        Math.sin(deltaLat / 2) ** 2 +
+        Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+      return Math.round(earthRadius * c);
+    },
+    [userLocation]
+  );
+
+  const formatDistanceLabel = useCallback((meters?: number | null): string | undefined => {
+    if (typeof meters !== 'number' || Number.isNaN(meters)) {
+      return undefined;
+    }
+    if (meters <= 0) {
+      return 'Nearby';
+    }
+
+    const km = meters / 1000;
+    const distanceText = km >= 1 ? `${km.toFixed(1)} km` : `${Math.round(meters)} m`;
+    const minutes = Math.max(1, Math.round(meters / 80));
+    return `${distanceText} · ${minutes} min`;
+  }, []);
+
+  const resolveDistanceLabel = useCallback(
+    (recommendation?: MealRecommendation, restaurant?: PlaceBasicInfo) => {
+      if (!recommendation && !restaurant) return undefined;
+      return (
+        recommendation?.distance ??
+        restaurant?.distance ??
+        formatDistanceLabel(restaurant?.distance_meters ?? computeDistanceMeters(restaurant))
+      );
+    },
+    [computeDistanceMeters, formatDistanceLabel]
+  );
+
+  const activeDistanceLabel = resolveDistanceLabel(activeRecommendation, activeRestaurant);
+  const nextDistanceLabel = resolveDistanceLabel(nextRecommendation);
 
   const x = useMotionValue(0);
   const rotate = useTransform(x, [-200, 0, 200], [-12, 0, 12]);
@@ -337,6 +402,7 @@ export function RecommendationsPage(): JSX.Element {
                 key={nextRecommendation.id}
                 recommendation={nextRecommendation}
                 restaurantName={nextRestaurantName || 'Loading...'}
+                distanceLabel={nextDistanceLabel}
                 style={{
                   scale: 0.95,
                   y: 20,
@@ -351,6 +417,7 @@ export function RecommendationsPage(): JSX.Element {
                 key={activeRecommendation.id}
                 recommendation={activeRecommendation}
                 restaurantName={activeRestaurantName || 'Loading...'}
+                distanceLabel={activeDistanceLabel}
                 style={{ x, rotate, opacity }}
                 dragHandlers={dragBindings}
                 swipeIntent={swipeIntent}

@@ -1,5 +1,5 @@
 import { motion, type MotionStyle, type MotionValue } from 'motion/react';
-import { Heart, X } from 'lucide-react';
+import { Heart, MapPin, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
@@ -18,6 +18,7 @@ interface RecommendationCardProps {
   dragHandlers?: Record<string, unknown>;
   swipeIntent?: RecommendationResponse | null;
   isFront?: boolean;
+  distanceLabel?: string;
 }
 
 export function RecommendationCard({
@@ -27,10 +28,12 @@ export function RecommendationCard({
   dragHandlers,
   swipeIntent,
   isFront = false,
+  distanceLabel,
 }: RecommendationCardProps) {
   const tags = recommendation.tags ?? [];
   const priceLabel = recommendation.price ?? '—';
   const descriptionText = recommendation.description ?? 'Tap to learn more.';
+  const displayDistance = distanceLabel ?? recommendation.distance;
 
   const matchBadge =
     typeof recommendation.matchScore === 'number' ? (
@@ -105,9 +108,9 @@ export function RecommendationCard({
 
         {/* Top Badges */}
         <div className="absolute left-0 right-0 top-0 z-10 flex items-start gap-2 p-4">
-          {recommendation.distance && (
+          {displayDistance && (
             <Badge variant="secondary" className="border-0 bg-black/40 text-white backdrop-blur-md">
-              {recommendation.distance}
+              {displayDistance}
             </Badge>
           )}
           {matchBadge}
@@ -127,6 +130,12 @@ export function RecommendationCard({
             <p className="text-lg font-medium text-white/80 shadow-black drop-shadow-sm">
               {restaurantName}
             </p>
+            {displayDistance ? (
+              <div className="mt-1 inline-flex items-center gap-1.5 text-sm text-white/85 shadow-black drop-shadow-sm">
+                <MapPin className="size-4 opacity-80" />
+                <span>{displayDistance}</span>
+              </div>
+            ) : null}
           </div>
 
           <p className="line-clamp-2 text-sm text-white/90 shadow-black drop-shadow-sm">

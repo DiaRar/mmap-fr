@@ -154,8 +154,15 @@ export const fetchRecommendations = async (
   options: FetchRecommendationsOptions = {}
 ): Promise<MealRecommendation[]> => {
   const limit = options.limit ?? 5;
+  const { lat, long } = options;
   const params = new URLSearchParams();
   params.append('limit', limit.toString());
+  if (typeof lat === 'number' && Number.isFinite(lat)) {
+    params.append('lat', lat.toString());
+  }
+  if (typeof long === 'number' && Number.isFinite(long)) {
+    params.append('long', long.toString());
+  }
 
   const meals = await apiRequest<MealResponse[]>(`/users/me/feed?${params.toString()}`);
   return meals.map(mapMealResponseToRecommendation);
@@ -178,14 +185,16 @@ export function useRestaurantById(id?: string) {
 interface UseRecommendationsOptions {
   limit?: number;
   enabled?: boolean;
+  lat?: number;
+  long?: number;
 }
 
 export function useRecommendationsQuery(options: UseRecommendationsOptions = {}) {
-  const { limit = 5, enabled = true } = options;
+  const { limit = 5, enabled = true, lat, long } = options;
 
   return useQuery({
-    queryKey: ['recommendations', limit],
-    queryFn: () => fetchRecommendations({ limit }),
+    queryKey: ['recommendations', { limit, lat, long }],
+    queryFn: () => fetchRecommendations({ limit, lat, long }),
     staleTime: 1000 * 60 * 5,
     enabled,
     refetchOnReconnect: false,
