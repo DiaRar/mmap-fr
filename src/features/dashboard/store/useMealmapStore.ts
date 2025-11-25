@@ -46,10 +46,7 @@ function persistLocation(location: GeoPoint | null, source: LocationSource | nul
     window.localStorage.removeItem(USER_LOCATION_STORAGE_KEY);
     return;
   }
-  window.localStorage.setItem(
-    USER_LOCATION_STORAGE_KEY,
-    JSON.stringify({ ...location, source })
-  );
+  window.localStorage.setItem(USER_LOCATION_STORAGE_KEY, JSON.stringify({ ...location, source }));
 }
 
 interface StoredLabelState {
@@ -89,10 +86,7 @@ function persistLocationLabel(label: string | null, coords: GeoPoint | null) {
     window.localStorage.removeItem(LOCATION_LABEL_STORAGE_KEY);
     return;
   }
-  window.localStorage.setItem(
-    LOCATION_LABEL_STORAGE_KEY,
-    JSON.stringify({ label, coords })
-  );
+  window.localStorage.setItem(LOCATION_LABEL_STORAGE_KEY, JSON.stringify({ label, coords }));
 }
 
 const { location: initialLocation, source: initialLocationSource } = readStoredLocation();
@@ -158,8 +152,7 @@ export const useMealmapStore = create<MealmapState>((set) => ({
   userLocation: initialLocation,
   userLocationSource: initialLocationSource,
   setUserLocation: (location, options) => {
-    const source: LocationSource | null =
-      location === null ? null : options?.source ?? 'auto';
+    const source: LocationSource | null = location === null ? null : (options?.source ?? 'auto');
     persistLocation(location, source);
     set({ userLocation: location, userLocationSource: source });
   },

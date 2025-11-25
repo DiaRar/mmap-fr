@@ -71,7 +71,9 @@ type GuardProps = {
 };
 
 function useAuthHydration(): boolean {
-  const [hasHydrated, setHasHydrated] = useState(() => useAuthStore.persist?.hasHydrated?.() ?? false);
+  const [hasHydrated, setHasHydrated] = useState(
+    () => useAuthStore.persist?.hasHydrated?.() ?? false
+  );
 
   useEffect(() => {
     const unsub = useAuthStore.persist?.onFinishHydration?.(() => {

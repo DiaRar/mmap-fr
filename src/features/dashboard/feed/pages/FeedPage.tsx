@@ -24,11 +24,11 @@ import { RestaurantSearch } from '../components/RestaurantSearch';
 export function FeedPage(): JSX.Element {
   const navigate = useNavigate();
   useLocation();
-  
+
   const searchTerm = useMealmapStore((state) => state.searchTerm);
   const setSearchTerm = useMealmapStore((state) => state.setSearchTerm);
   const bookmarkedIds = useMealmapStore((state) => state.bookmarkedIds);
-  
+
   const { data: placesPage, isPending } = usePlaces({
     searchTerm: searchTerm,
     // radius_m: 5000 // Optional: limit to 5km if location available

@@ -14,7 +14,7 @@ interface UsePlacesOptions {
 
 export function usePlaces(options: UsePlacesOptions = {}) {
   const { userLocation } = useLocation();
-  
+
   // Use provided coords or user location
   const lat = options.lat ?? userLocation?.lat ?? 0;
   const lng = options.lng ?? userLocation?.lng ?? 0;

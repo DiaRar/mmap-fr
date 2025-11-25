@@ -146,6 +146,8 @@ const mapMealResponseToRecommendation = (meal: MealResponse): MealRecommendation
 
 interface FetchRecommendationsOptions {
   limit?: number;
+  lat?: number;
+  long?: number;
 }
 
 export const fetchRecommendations = async (

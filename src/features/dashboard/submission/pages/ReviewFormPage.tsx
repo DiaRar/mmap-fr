@@ -52,11 +52,12 @@ const reviewFormSchema = z
     restaurantName: z.string().min(2, 'Add the restaurant name.'),
     mealId: z.string().optional(),
     mealName: z.string().min(2, 'Give the dish a memorable name.'),
-    price: z
-      .number({ invalid_type_error: 'Share the price (₩1,000+).' })
-      .optional(),
+    price: z.number({ invalid_type_error: 'Share the price (₩1,000+).' }).optional(),
     queueEstimateMinutes: z
-      .number({ required_error: 'Show how long you waited for your meal.', invalid_type_error: 'Share the wait time in minutes.' })
+      .number({
+        required_error: 'Show how long you waited for your meal.',
+        invalid_type_error: 'Share the wait time in minutes.',
+      })
       .int()
       .min(0, 'Wait time must be 0 or more minutes.'),
     currency: z
@@ -115,12 +116,14 @@ export function ReviewFormPage(): JSX.Element {
   const navigate = useNavigate();
   const addPoints = useMealmapStore((state) => state.addPoints);
   const userPoints = useMealmapStore((state) => state.userPoints);
-  
+
   const { mutateAsync: createReview, isPending: isSubmitting } = useCreateReview();
   const { mutateAsync: updateMeal, isPending: isUpdatingMeal } = useUpdateMeal();
 
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [selectedMealMeta, setSelectedMealMeta] = useState<{ id?: string; price?: number | null }>({});
+  const [selectedMealMeta, setSelectedMealMeta] = useState<{ id?: string; price?: number | null }>(
+    {}
+  );
   const location = useLocation();
   const reviewContext = location.state as
     | {
@@ -167,7 +170,10 @@ export function ReviewFormPage(): JSX.Element {
       form.setValue('mealId', reviewContext.mealId, { shouldDirty: false, shouldValidate: true });
     }
     if (reviewContext.mealName) {
-      form.setValue('mealName', reviewContext.mealName, { shouldDirty: false, shouldValidate: true });
+      form.setValue('mealName', reviewContext.mealName, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
     }
     if (reviewContext.mealId || reviewContext.mealName) {
       setSelectedMealMeta((prev) => ({
@@ -376,7 +382,10 @@ export function ReviewFormPage(): JSX.Element {
               <RestaurantSelector
                 value={form.watch('restaurantName')}
                 onChange={handleRestaurantChange}
-                error={form.formState.errors.restaurantName?.message || form.formState.errors.placeId?.message}
+                error={
+                  form.formState.errors.restaurantName?.message ||
+                  form.formState.errors.placeId?.message
+                }
               />
 
               <MealSelector
@@ -547,7 +556,8 @@ export function ReviewFormPage(): JSX.Element {
             <div className="space-y-3">
               <h2 className="text-base font-semibold text-foreground">Ready to submit?</h2>
               <p className="text-sm text-muted-foreground">
-                Reviews save automatically as drafts. Publish once you&apos;re satisfied with the copy.
+                Reviews save automatically as drafts. Publish once you&apos;re satisfied with the
+                copy.
               </p>
             </div>
             <div className="rounded-2xl border border-border/40 bg-muted/20 p-4">
@@ -584,7 +594,6 @@ export function ReviewFormPage(): JSX.Element {
           </aside>
         </motion.form>
       </main>
-
     </div>
   );
 }

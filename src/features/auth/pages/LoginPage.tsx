@@ -329,14 +329,14 @@ export function LoginPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.email && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.email && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('email')}
                     onFocus={() => handleFieldFocus('email')}
                     onBlur={(e) => {
-                        register('email').onBlur(e);
-                        handleFieldBlur('email');
+                      register('email').onBlur(e);
+                      handleFieldBlur('email');
                     }}
                   />
                   {errors.email && (
@@ -366,14 +366,14 @@ export function LoginPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.password && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.password && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('password')}
                     onFocus={() => handleFieldFocus('password')}
                     onBlur={(e) => {
-                        register('password').onBlur(e);
-                        handleFieldBlur('password');
+                      register('password').onBlur(e);
+                      handleFieldBlur('password');
                     }}
                   />
                   {errors.password && (

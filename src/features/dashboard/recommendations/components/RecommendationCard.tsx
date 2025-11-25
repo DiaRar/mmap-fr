@@ -33,34 +33,31 @@ export function RecommendationCard({
   const descriptionText = recommendation.description ?? 'Tap to learn more.';
 
   const matchBadge =
-    typeof recommendation.matchScore === 'number'
-      ? (
-          <Badge
-            variant="secondary"
-            className={cn(
-              'ml-auto border-0 backdrop-blur-md',
-              recommendation.matchScore > 80
-                ? 'bg-green-500/80 text-white'
-                : 'bg-black/40 text-white'
-            )}
-          >
-            Match {recommendation.matchScore}%
-          </Badge>
-        )
-      : typeof recommendation.rating === 'number'
-        ? (
-            <Badge className="ml-auto border-0 bg-black/40 text-white backdrop-blur-md" variant="secondary">
-              {recommendation.rating.toFixed(1)}★ avg
-            </Badge>
-          )
-        : null;
+    typeof recommendation.matchScore === 'number' ? (
+      <Badge
+        variant="secondary"
+        className={cn(
+          'ml-auto border-0 backdrop-blur-md',
+          recommendation.matchScore > 80 ? 'bg-green-500/80 text-white' : 'bg-black/40 text-white'
+        )}
+      >
+        Match {recommendation.matchScore}%
+      </Badge>
+    ) : typeof recommendation.rating === 'number' ? (
+      <Badge
+        className="ml-auto border-0 bg-black/40 text-white backdrop-blur-md"
+        variant="secondary"
+      >
+        {recommendation.rating.toFixed(1)}★ avg
+      </Badge>
+    ) : null;
 
   return (
     <motion.div
       style={style as MotionStyle}
       className={cn(
-        "absolute inset-0 h-full w-full touch-none select-none will-change-transform",
-        isFront ? "z-10" : "z-0"
+        'absolute inset-0 h-full w-full touch-none select-none will-change-transform',
+        isFront ? 'z-10' : 'z-0'
       )}
       {...(isFront ? dragHandlers : {})}
     >
@@ -85,14 +82,18 @@ export function RecommendationCard({
         {isFront && swipeIntent && (
           <div
             className={cn(
-              "absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200",
-              swipeIntent === 'liked' ? "bg-green-500/20" : "bg-red-500/20"
+              'absolute inset-0 z-20 flex items-center justify-center transition-opacity duration-200',
+              swipeIntent === 'liked' ? 'bg-green-500/20' : 'bg-red-500/20'
             )}
           >
-            <div className={cn(
-              "rounded-full border-4 p-4",
-              swipeIntent === 'liked' ? "border-green-400 text-green-400" : "border-red-400 text-red-400"
-            )}>
+            <div
+              className={cn(
+                'rounded-full border-4 p-4',
+                swipeIntent === 'liked'
+                  ? 'border-green-400 text-green-400'
+                  : 'border-red-400 text-red-400'
+              )}
+            >
               {swipeIntent === 'liked' ? (
                 <Heart className="size-12 fill-current" />
               ) : (
@@ -143,7 +144,10 @@ export function RecommendationCard({
               </Badge>
             ))}
             {recommendation.calories && (
-              <Badge variant="outline" className="border-white/30 bg-white/10 text-xs text-white backdrop-blur-sm">
+              <Badge
+                variant="outline"
+                className="border-white/30 bg-white/10 text-xs text-white backdrop-blur-sm"
+              >
                 {recommendation.calories} kcal
               </Badge>
             )}

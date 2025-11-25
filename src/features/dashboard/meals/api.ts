@@ -17,12 +17,7 @@ interface UseMealsOptions {
   pageSize?: number;
 }
 
-export function useMeals({
-  placeId,
-  searchTerm,
-  page = 1,
-  pageSize = 10,
-}: UseMealsOptions = {}) {
+export function useMeals({ placeId, searchTerm, page = 1, pageSize = 10 }: UseMealsOptions = {}) {
   return useQuery({
     queryKey: ['meals', placeId ?? 'all', searchTerm ?? '', page, pageSize],
     enabled: Boolean(placeId),
@@ -73,11 +68,7 @@ interface UseMealReviewsOptions {
   pageSize?: number;
 }
 
-export function useMealReviews({
-  mealId,
-  page = 1,
-  pageSize = 10,
-}: UseMealReviewsOptions) {
+export function useMealReviews({ mealId, page = 1, pageSize = 10 }: UseMealReviewsOptions) {
   return useQuery({
     queryKey: ['reviews', 'meal', mealId, page, pageSize],
     enabled: Boolean(mealId),

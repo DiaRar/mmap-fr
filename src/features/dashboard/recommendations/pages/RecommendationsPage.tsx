@@ -2,6 +2,7 @@ import { useState, useCallback, useEffect, type JSX } from 'react';
 import { AnimatePresence, animate, motion, useMotionValue, useTransform } from 'motion/react';
 import { Heart, RotateCcw, X, Info, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useLocation } from '@/features/dashboard/hooks/useLocation';
 import { useDrag } from '@use-gesture/react';
 import { toast } from 'sonner';
 
@@ -14,7 +15,11 @@ import {
   DrawerTrigger,
 } from '@/components/ui/drawer';
 import { Spinner } from '@/components/ui/spinner';
-import { fetchRecommendations, useRecommendationsQuery, useRestaurantById } from '@/features/dashboard/data/hooks';
+import {
+  fetchRecommendations,
+  useRecommendationsQuery,
+  useRestaurantById,
+} from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { RecommendationCard } from '@/features/dashboard/recommendations/components/RecommendationCard';
 import { useCreateSwipeMutation } from '@/features/dashboard/recommendations/api';
@@ -38,6 +43,9 @@ export function RecommendationsPage(): JSX.Element {
     refetch,
   } = useRecommendationsQuery({ limit: RECOMMENDATION_BATCH_SIZE });
   const [recommendations, setRecommendations] = useState<MealRecommendation[]>(initialBatch);
+
+  const { userLocation } = useLocation();
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [swipeIntent, setSwipeIntent] = useState<RecommendationResponse | null>(null);
   const [isPrefetching, setIsPrefetching] = useState(false);
@@ -78,7 +86,11 @@ export function RecommendationsPage(): JSX.Element {
 
     setIsPrefetching(true);
     try {
-      const nextBatch = await fetchRecommendations({ limit: RECOMMENDATION_BATCH_SIZE });
+      const nextBatch = await fetchRecommendations({
+        lat: userLocation?.lat,
+        long: userLocation?.lng,
+        limit: RECOMMENDATION_BATCH_SIZE,
+      });
       if (nextBatch.length === 0) {
         setRemoteExhausted(true);
         return;
@@ -97,7 +109,7 @@ export function RecommendationsPage(): JSX.Element {
     } finally {
       setIsPrefetching(false);
     }
-  }, [isPrefetching, remoteExhausted]);
+  }, [isPrefetching, remoteExhausted, userLocation?.lat, userLocation?.lng]);
 
   useEffect(() => {
     if (!recommendations.length || remoteExhausted) {
@@ -120,7 +132,7 @@ export function RecommendationsPage(): JSX.Element {
 
   // Next Card Data (for background stack)
   const nextRecommendation = recommendations[activeIndex + 1];
-  // We don't fetch restaurant for next card to save resources, 
+  // We don't fetch restaurant for next card to save resources,
   // it will load when it becomes active.
   const nextRestaurantName =
     nextRecommendation?.restaurantName ?? nextRecommendation?.restaurantId ?? 'Loading...';
@@ -268,7 +280,7 @@ export function RecommendationsPage(): JSX.Element {
   return (
     <div className="flex h-full flex-col w-full overflow-hidden">
       {/* Header */}
-      <motion.header 
+      <motion.header
         className="flex items-center justify-between px-6 py-4"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -277,7 +289,7 @@ export function RecommendationsPage(): JSX.Element {
         <div className="flex flex-col">
           <h1 className="text-xl font-bold tracking-tight">Daily Picks</h1>
           <p className="text-xs text-muted-foreground">Curated just for you</p>
-                    </div>
+        </div>
         <Drawer>
           <DrawerTrigger asChild>
             <Button variant="ghost" size="icon" className="rounded-full">
@@ -293,23 +305,23 @@ export function RecommendationsPage(): JSX.Element {
                 <div className="rounded-2xl bg-green-50 p-4 text-center">
                   <div className="text-3xl font-bold text-green-600">{stats.liked}</div>
                   <div className="text-sm font-medium text-green-700">Saved</div>
-                      </div>
+                </div>
                 <div className="rounded-2xl bg-red-50 p-4 text-center">
                   <div className="text-3xl font-bold text-red-600">{stats.dismissed}</div>
                   <div className="text-sm font-medium text-red-700">Skipped</div>
-                      </div>
-                    </div>
+                </div>
+              </div>
               <div className="p-4">
-            <Button
-                  variant="outline" 
-                  className="w-full" 
-              onClick={() => setActiveIndex(0)}
-              disabled={Object.keys(feedback).length === 0}
-            >
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setActiveIndex(0)}
+                  disabled={Object.keys(feedback).length === 0}
+                >
                   <RotateCcw className="mr-2 size-4" />
                   Reset History
-            </Button>
-          </div>
+                </Button>
+              </div>
             </div>
           </DrawerContent>
         </Drawer>
@@ -346,7 +358,7 @@ export function RecommendationsPage(): JSX.Element {
               />
             )}
           </AnimatePresence>
-          </div>
+        </div>
       </main>
 
       {/* Bottom Controls */}

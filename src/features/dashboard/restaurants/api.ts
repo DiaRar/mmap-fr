@@ -41,11 +41,7 @@ interface UsePlaceReviewsOptions {
   pageSize?: number;
 }
 
-export function usePlaceReviews({
-  placeId,
-  page = 1,
-  pageSize = 6,
-}: UsePlaceReviewsOptions) {
+export function usePlaceReviews({ placeId, page = 1, pageSize = 6 }: UsePlaceReviewsOptions) {
   return useQuery({
     queryKey: ['reviews', 'place', placeId, page, pageSize],
     enabled: Boolean(placeId),

@@ -18,11 +18,7 @@ export interface ReviewRatingFieldProps {
   error?: string;
 }
 
-export function ReviewRatingField({
-  value,
-  onChange,
-  error,
-}: ReviewRatingFieldProps): JSX.Element {
+export function ReviewRatingField({ value, onChange, error }: ReviewRatingFieldProps): JSX.Element {
   return (
     <Field>
       <FieldLabel>

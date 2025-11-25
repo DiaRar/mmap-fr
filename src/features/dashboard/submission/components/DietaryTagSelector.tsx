@@ -27,7 +27,9 @@ export function DietaryTagSelector<TOption extends string>({
     <Field>
       <FieldLabel>
         <FieldTitle>Dietary context</FieldTitle>
-        <FieldDescription>Tap every tag that applies. We use this to personalise the map & feed.</FieldDescription>
+        <FieldDescription>
+          Tap every tag that applies. We use this to personalise the map & feed.
+        </FieldDescription>
       </FieldLabel>
       <FieldContent>
         <div className="flex flex-wrap gap-2">

@@ -23,7 +23,9 @@ export function PhotoUploadField({
     <Field>
       <FieldLabel>
         <FieldTitle>Photo evidence</FieldTitle>
-        <FieldDescription>Snap the dish or upload from your camera roll for visual context.</FieldDescription>
+        <FieldDescription>
+          Snap the dish or upload from your camera roll for visual context.
+        </FieldDescription>
       </FieldLabel>
       <FieldContent>
         <label

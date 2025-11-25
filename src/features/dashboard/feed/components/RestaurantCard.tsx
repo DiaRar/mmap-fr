@@ -158,7 +158,11 @@ export function RestaurantCard({
           ) : null}
         </CardTitle>
         <CardDescription className="line-clamp-2 text-sm text-muted-foreground">
-          {[cuisineLabel, restaurant.priceRange, reviewCount ? `${reviewCount.toLocaleString()} reviews` : null]
+          {[
+            cuisineLabel,
+            restaurant.priceRange,
+            reviewCount ? `${reviewCount.toLocaleString()} reviews` : null,
+          ]
             .filter(Boolean)
             .join(' · ')}
         </CardDescription>
@@ -172,7 +176,7 @@ export function RestaurantCard({
               {distanceLabel}
             </span>
           ) : null}
-          {(distanceLabel && (etaMinutes || queueMinutes)) ? (
+          {distanceLabel && (etaMinutes || queueMinutes) ? (
             <Separator orientation="vertical" className="h-4 bg-border/60" />
           ) : null}
           {etaMinutes ? (

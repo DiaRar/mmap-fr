@@ -46,7 +46,17 @@ async function reverseGeocodeRoad(lat: number, lon: number): Promise<string | nu
     const data = await res.json();
     const addr = data?.address ?? {};
     // prefer road, pedestrian, footway, avenue, street, etc.
-    const road = addr.road || addr.pedestrian || addr.footway || addr.cycleway || addr.neighbourhood || addr.suburb || addr.village || addr.town || addr.city || null;
+    const road =
+      addr.road ||
+      addr.pedestrian ||
+      addr.footway ||
+      addr.cycleway ||
+      addr.neighbourhood ||
+      addr.suburb ||
+      addr.village ||
+      addr.town ||
+      addr.city ||
+      null;
     _reverseGeocodeCache.set(key, road);
     return road;
   } catch (e) {
@@ -56,7 +66,10 @@ async function reverseGeocodeRoad(lat: number, lon: number): Promise<string | nu
 }
 
 function SetUserLocation({
-  fallback = [(restaurantBounds.maxLat + restaurantBounds.minLat) / 2, (restaurantBounds.maxLng + restaurantBounds.minLng) / 2] as [number, number],
+  fallback = [
+    (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
+    (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
+  ] as [number, number],
   onFound,
 }: {
   fallback?: [number, number];
@@ -112,7 +125,9 @@ function ZoomResponsiveMarkers({
   useEffect(() => {
     const onZoom = () => setZoom(map.getZoom());
     map.on('zoomend', onZoom);
-    return () => { map.off('zoomend', onZoom); };
+    return () => {
+      map.off('zoomend', onZoom);
+    };
   }, [map]);
 
   if (!restaurants || restaurants.length === 0) return null;
@@ -151,17 +166,33 @@ function ZoomResponsiveMarkers({
           </div>
         `;
 
-        const icon = L.divIcon({ className: 'custom-div-icon', html, iconSize: [isSmall ? 56 : 80, isSmall ? 56 : 80], iconAnchor: [isSmall ? 28 : 40, isSmall ? 28 : 40] });
+        const icon = L.divIcon({
+          className: 'custom-div-icon',
+          html,
+          iconSize: [isSmall ? 56 : 80, isSmall ? 56 : 80],
+          iconAnchor: [isSmall ? 28 : 40, isSmall ? 28 : 40],
+        });
 
         return (
-          <Marker key={restaurant.id} position={[lat, lng]} icon={icon} eventHandlers={{ click: () => selectRestaurant(restaurant.id) }} />
+          <Marker
+            key={restaurant.id}
+            position={[lat, lng]}
+            icon={icon}
+            eventHandlers={{ click: () => selectRestaurant(restaurant.id) }}
+          />
         );
       })}
     </>
   );
 }
 
-function FitBounds({restaurants, userLocation}: { restaurants: PlaceBasicInfo[], userLocation?: [number, number] | null }) : JSX.Element | null {
+function FitBounds({
+  restaurants,
+  userLocation,
+}: {
+  restaurants: PlaceBasicInfo[];
+  userLocation?: [number, number] | null;
+}): JSX.Element | null {
   const map = useMap();
 
   useEffect(() => {
@@ -173,8 +204,10 @@ function FitBounds({restaurants, userLocation}: { restaurants: PlaceBasicInfo[],
 
     if (!restaurants || restaurants.length === 0) return;
 
-    const bounds = restaurants
-      .map((r) => [r.coordinates?.lat ?? r.latitude, r.coordinates?.lng ?? r.longitude]) as [number, number][];
+    const bounds = restaurants.map((r) => [
+      r.coordinates?.lat ?? r.latitude,
+      r.coordinates?.lng ?? r.longitude,
+    ]) as [number, number][];
 
     if (userLocation) bounds.push(userLocation);
 
@@ -285,10 +318,18 @@ export function MapPage(): JSX.Element {
                 className="w-full h-full"
                 style={{ borderRadius: '1rem' }}
               >
-                <SetUserLocation fallback={[(restaurantBounds.maxLat + restaurantBounds.minLat) / 2, (restaurantBounds.maxLng + restaurantBounds.minLng) / 2]} onFound={(latlng) => setUserLocation((prev) => prev ?? latlng)} />
+                <SetUserLocation
+                  fallback={[
+                    (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
+                    (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
+                  ]}
+                  onFound={(latlng) => setUserLocation((prev) => prev ?? latlng)}
+                />
                 <TileLayer
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
-                  attribution={'&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'}
+                  attribution={
+                    '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
+                  }
                   subdomains={['a', 'b', 'c', 'd']}
                   maxZoom={19}
                 />
@@ -365,10 +406,8 @@ export function MapPage(): JSX.Element {
                       {formatRelativeReview(selectedRestaurant.lastReviewAt) ?? 'No recent reviews'}
                     </span>
                   </div>
-                  {[
-                    ...(selectedRestaurant.tags ?? []),
-                    ...(selectedRestaurant.dietaryTags ?? []),
-                  ].length ? (
+                  {[...(selectedRestaurant.tags ?? []), ...(selectedRestaurant.dietaryTags ?? [])]
+                    .length ? (
                     <div className="flex flex-wrap gap-2">
                       {[
                         ...(selectedRestaurant.tags ?? []),
@@ -393,7 +432,11 @@ export function MapPage(): JSX.Element {
                     >
                       Browse other pins
                     </Button>
-                    <Button className="flex-1 rounded-full" onClick={() => navigate('/')} type="button">
+                    <Button
+                      className="flex-1 rounded-full"
+                      onClick={() => navigate('/')}
+                      type="button"
+                    >
                       View reviews
                     </Button>
                   </div>
@@ -409,7 +452,6 @@ export function MapPage(): JSX.Element {
           </Card>
         </motion.section>
       </main>
-
     </div>
   );
 }

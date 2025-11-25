@@ -14,13 +14,7 @@ import {
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
@@ -89,7 +83,10 @@ function MealAccordion({
         const dietaryBadges = extractMealTags(meal.tags);
 
         return (
-          <Card key={meal.id} className="rounded-3xl border border-border/50 bg-white/85 shadow-none">
+          <Card
+            key={meal.id}
+            className="rounded-3xl border border-border/50 bg-white/85 shadow-none"
+          >
             <button
               type="button"
               onClick={() => onToggle(meal.id)}
@@ -138,7 +135,9 @@ function MealAccordion({
                       ))}
                     </div>
                   ) : (
-                    <p className="flex-1 text-sm text-muted-foreground">No dietary tags documented yet.</p>
+                    <p className="flex-1 text-sm text-muted-foreground">
+                      No dietary tags documented yet.
+                    </p>
                   )}
                   <Button
                     variant="outline"
@@ -223,7 +222,10 @@ function ReviewList({ reviews }: ReviewListProps): JSX.Element {
       {reviews.map((review) => {
         const badges = extractReviewTags(review);
         return (
-          <Card key={review.id} className="rounded-3xl border border-border/40 bg-white/85 shadow-sm">
+          <Card
+            key={review.id}
+            className="rounded-3xl border border-border/40 bg-white/85 shadow-sm"
+          >
             <CardContent className="space-y-3 px-5 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -240,9 +242,13 @@ function ReviewList({ reviews }: ReviewListProps): JSX.Element {
                   {review.rating.toFixed(1)}
                 </div>
               </div>
-              <p className="text-sm text-foreground">{review.text ?? 'No written review provided.'}</p>
+              <p className="text-sm text-foreground">
+                {review.text ?? 'No written review provided.'}
+              </p>
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                {typeof review.price === 'number' ? <span>{formatCurrency(review.price)}</span> : null}
+                {typeof review.price === 'number' ? (
+                  <span>{formatCurrency(review.price)}</span>
+                ) : null}
                 {typeof review.waiting_time_minutes === 'number' ? (
                   <>
                     <Separator orientation="vertical" className="h-3 bg-border/60" />
@@ -254,7 +260,11 @@ function ReviewList({ reviews }: ReviewListProps): JSX.Element {
                     <Separator orientation="vertical" className="h-3 bg-border/60" />
                     <div className="flex flex-wrap gap-1.5">
                       {badges.map((badge) => (
-                        <Badge key={badge} variant="outline" className="rounded-full px-2 py-0.5 text-[10px]">
+                        <Badge
+                          key={badge}
+                          variant="outline"
+                          className="rounded-full px-2 py-0.5 text-[10px]"
+                        >
                           {badge}
                         </Badge>
                       ))}
@@ -287,10 +297,7 @@ export function RestaurantDetailsPage(): JSX.Element {
     placeId,
     pageSize: 25,
   });
-  const {
-    data: reviewsPage,
-    isPending: isReviewsLoading,
-  } = usePlaceReviews({
+  const { data: reviewsPage, isPending: isReviewsLoading } = usePlaceReviews({
     placeId,
     pageSize: 6,
   });
@@ -298,7 +305,10 @@ export function RestaurantDetailsPage(): JSX.Element {
   const meals = mealsPage?.results ?? [];
   const reviews = reviewsPage?.results ?? [];
 
-  const galleryImages = useMemo(() => placeDetails?.images?.slice(0, 4) ?? [], [placeDetails?.images]);
+  const galleryImages = useMemo(
+    () => placeDetails?.images?.slice(0, 4) ?? [],
+    [placeDetails?.images]
+  );
   const heroImage =
     placeDetails?.images?.[0]?.image_url ??
     placeDetails?.first_image?.image_url ??
@@ -308,12 +318,9 @@ export function RestaurantDetailsPage(): JSX.Element {
   const distanceLabel = formatDistance(placeDetails?.distance_meters);
   const cuisineLabel = formatCuisine(placeDetails?.cuisine);
 
-  const handleToggleMeal = useCallback(
-    (mealId: string) => {
-      setExpandedMealId((current) => (current === mealId ? null : mealId));
-    },
-    []
-  );
+  const handleToggleMeal = useCallback((mealId: string) => {
+    setExpandedMealId((current) => (current === mealId ? null : mealId));
+  }, []);
 
   const handleReviewMeal = useCallback(
     ({ mealId, mealName }: { mealId: string; mealName: string }) => {
@@ -342,12 +349,11 @@ export function RestaurantDetailsPage(): JSX.Element {
     [navigate, placeDetails?.name, placeId]
   );
 
-  const handleQuickTagToggle = useCallback(
-    (tag: DietaryTag) => {
-      setQuickTags((prev) => (prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]));
-    },
-    []
-  );
+  const handleQuickTagToggle = useCallback((tag: DietaryTag) => {
+    setQuickTags((prev) =>
+      prev.includes(tag) ? prev.filter((item) => item !== tag) : [...prev, tag]
+    );
+  }, []);
 
   const handleQuickPhotoUpload = useCallback((event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -402,7 +408,9 @@ export function RestaurantDetailsPage(): JSX.Element {
         <Separator orientation="vertical" className="h-6 bg-border/60" />
         <div className="space-y-0.5">
           <p className="text-sm font-semibold text-muted-foreground">Restaurant details</p>
-          <p className="text-base font-semibold text-foreground">{placeDetails?.name ?? 'Loading…'}</p>
+          <p className="text-base font-semibold text-foreground">
+            {placeDetails?.name ?? 'Loading…'}
+          </p>
         </div>
       </motion.header>
 
@@ -414,7 +422,9 @@ export function RestaurantDetailsPage(): JSX.Element {
         ) : placeError ? (
           <Card className="rounded-3xl border border-destructive/40 bg-destructive/10">
             <CardContent className="py-10 text-center">
-              <p className="text-base font-semibold text-destructive">Unable to load this restaurant.</p>
+              <p className="text-base font-semibold text-destructive">
+                Unable to load this restaurant.
+              </p>
               <p className="mt-1 text-sm text-destructive">
                 {(placeError as Error).message ?? 'The server did not return any data.'}
               </p>
@@ -450,13 +460,18 @@ export function RestaurantDetailsPage(): JSX.Element {
                       </Badge>
                     ) : null}
                     {distanceLabel ? (
-                      <Badge variant="outline" className="rounded-full border-white/60 bg-white/20 text-xs text-white">
+                      <Badge
+                        variant="outline"
+                        className="rounded-full border-white/60 bg-white/20 text-xs text-white"
+                      >
                         {distanceLabel}
                       </Badge>
                     ) : null}
                   </div>
                   <h1 className="text-2xl font-semibold">{placeDetails.name}</h1>
-                  <p className="text-sm text-white/80">{placeDetails.address ?? 'Address unavailable'}</p>
+                  <p className="text-sm text-white/80">
+                    {placeDetails.address ?? 'Address unavailable'}
+                  </p>
                   <div className="mt-4 flex flex-wrap items-center gap-3 text-sm font-semibold">
                     <span className="inline-flex items-center gap-1">
                       <Star className="size-4 fill-current text-amber-300" />
@@ -470,7 +485,10 @@ export function RestaurantDetailsPage(): JSX.Element {
               {galleryImages.length ? (
                 <div className="grid grid-cols-2 gap-2 border-t border-border/60 bg-background/40 p-4 sm:grid-cols-4">
                   {galleryImages.map((image) => (
-                    <div key={image.id} className="overflow-hidden rounded-2xl border border-border/40">
+                    <div
+                      key={image.id}
+                      className="overflow-hidden rounded-2xl border border-border/40"
+                    >
                       <img
                         src={image.image_url}
                         alt={`${placeDetails.name} gallery`}
@@ -505,7 +523,9 @@ export function RestaurantDetailsPage(): JSX.Element {
               <div>
                 <div className="flex items-center justify-between pb-3">
                   <div>
-                    <h2 className="text-lg font-semibold text-foreground">Meals at {placeDetails.name}</h2>
+                    <h2 className="text-lg font-semibold text-foreground">
+                      Meals at {placeDetails.name}
+                    </h2>
                     <p className="text-sm text-muted-foreground">
                       Tap a dish to peek at community notes or start a review.
                     </p>
@@ -527,8 +547,8 @@ export function RestaurantDetailsPage(): JSX.Element {
                 <CardHeader>
                   <CardTitle className="text-base">Ready to review?</CardTitle>
                   <CardDescription>
-                    Reuse your last dietary context and add a quick photo before jumping into the full
-                    form.
+                    Reuse your last dietary context and add a quick photo before jumping into the
+                    full form.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -537,7 +557,10 @@ export function RestaurantDetailsPage(): JSX.Element {
                     value={quickTags}
                     onToggle={handleQuickTagToggle}
                   />
-                  <PhotoUploadField photoPreview={quickPhotoPreview} onPhotoUpload={handleQuickPhotoUpload} />
+                  <PhotoUploadField
+                    photoPreview={quickPhotoPreview}
+                    onPhotoUpload={handleQuickPhotoUpload}
+                  />
                   <Button className="w-full rounded-full" onClick={handleStartReview}>
                     Start review form
                   </Button>
@@ -553,7 +576,12 @@ export function RestaurantDetailsPage(): JSX.Element {
                     What diners are saying after their latest meals.
                   </p>
                 </div>
-                <Button variant="outline" size="sm" className="rounded-full" onClick={handleStartReview}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="rounded-full"
+                  onClick={handleStartReview}
+                >
                   Share your take
                 </Button>
               </div>

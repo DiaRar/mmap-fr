@@ -40,8 +40,13 @@ export function RestaurantSearch({
 
   const setUserLocation = useMealmapStore((state) => state.setUserLocation);
   const setLocationLabel = useMealmapStore((state) => state.setLocationLabel);
-  const { userLocation, isLoading, error: locationError, permissionDenied, requestLocation } =
-    useLocation();
+  const {
+    userLocation,
+    isLoading,
+    error: locationError,
+    permissionDenied,
+    requestLocation,
+  } = useLocation();
   const {
     locationLabel,
     isResolving: isResolvingLabel,
@@ -125,19 +130,12 @@ export function RestaurantSearch({
       isError: true,
       showSpinner: false,
     };
-  }, [
-    isLoading,
-    locationLabel,
-    userLocation,
-    isResolvingLabel,
-    permissionDenied,
-    locationError,
-  ]);
+  }, [isLoading, locationLabel, userLocation, isResolvingLabel, permissionDenied, locationError]);
 
   const helperMessage =
     reverseGeocodeError && status.helper
       ? `${status.helper} (${reverseGeocodeError})`
-      : status.helper ?? reverseGeocodeError ?? '';
+      : (status.helper ?? reverseGeocodeError ?? '');
 
   const handleManualSave = useCallback(() => {
     const lat = Number(manualLat);
@@ -240,11 +238,15 @@ export function RestaurantSearch({
                   <span className={status.isError ? 'text-destructive' : undefined}>
                     {status.message}
                   </span>
-                  {status.showSpinner && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+                  {status.showSpinner && (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  )}
                 </div>
                 {helperMessage && (
                   <p
-                    className={`text-xs ${status.isError ? 'text-destructive' : 'text-muted-foreground'}`}
+                    className={`text-xs ${
+                      status.isError ? 'text-destructive' : 'text-muted-foreground'
+                    }`}
                   >
                     {helperMessage}
                   </p>
@@ -273,45 +275,47 @@ export function RestaurantSearch({
               </Button>
             </div>
           </div>
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            value={value}
-            onChange={(event) => onChange(event.currentTarget.value)}
-            placeholder="Search for sushi, burgers, coffee..."
-            className="h-12 rounded-full bg-background pl-12 text-sm"
-            aria-label="Search for nearby restaurants"
-          />
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={value}
+              onChange={(event) => onChange(event.currentTarget.value)}
+              placeholder="Search for sushi, burgers, coffee..."
+              className="h-12 rounded-full bg-background pl-12 text-sm"
+              aria-label="Search for nearby restaurants"
+            />
+          </div>
         </div>
-      </div>
 
-      <ButtonGroup
-        className="mx-auto flex max-w-full flex-wrap justify-center gap-2"
-        data-horizontal-scroll
-      >
-        {trendingFilters.map((filter) => {
-          const isActive = activeFilters.includes(filter);
-          return (
-            <motion.div
-              key={filter}
-              layout
-              whileHover={{ y: -2 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ type: 'spring', stiffness: 350, damping: 18 }}
-            >
-              <Button
-                variant={isActive ? 'default' : 'outline'}
-                size="sm"
-                className={`rounded-full border-border/60 px-4 text-xs font-medium transition-shadow ${isActive ? 'shadow-md shadow-primary/20' : ''}`}
-                onClick={() => handleFilterClick(filter)}
-                aria-pressed={isActive}
+        <ButtonGroup
+          className="mx-auto flex max-w-full flex-wrap justify-center gap-2"
+          data-horizontal-scroll
+        >
+          {trendingFilters.map((filter) => {
+            const isActive = activeFilters.includes(filter);
+            return (
+              <motion.div
+                key={filter}
+                layout
+                whileHover={{ y: -2 }}
+                whileTap={{ scale: 0.96 }}
+                transition={{ type: 'spring', stiffness: 350, damping: 18 }}
               >
-                {filter}
-              </Button>
-            </motion.div>
-          );
-        })}
-      </ButtonGroup>
+                <Button
+                  variant={isActive ? 'default' : 'outline'}
+                  size="sm"
+                  className={`rounded-full border-border/60 px-4 text-xs font-medium transition-shadow ${
+                    isActive ? 'shadow-md shadow-primary/20' : ''
+                  }`}
+                  onClick={() => handleFilterClick(filter)}
+                  aria-pressed={isActive}
+                >
+                  {filter}
+                </Button>
+              </motion.div>
+            );
+          })}
+        </ButtonGroup>
       </section>
     </>
   );

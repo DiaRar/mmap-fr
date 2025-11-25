@@ -32,13 +32,13 @@ export function useCreateReview() {
         formData.append('meal_id', data.meal_id);
       }
       formData.append('rating', data.rating.toString());
-      
+
       if (data.text) formData.append('text', data.text);
       if (typeof data.price === 'number') formData.append('price', data.price.toString());
       if (typeof data.waiting_time_minutes === 'number') {
         formData.append('waiting_time_minutes', data.waiting_time_minutes.toString());
       }
-      
+
       // Tags
       if (data.is_vegan) formData.append('is_vegan', data.is_vegan);
       if (data.is_halal) formData.append('is_halal', data.is_halal);

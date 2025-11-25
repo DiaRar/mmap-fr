@@ -20,11 +20,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Field,
   FieldContent,
@@ -55,14 +51,14 @@ export interface MealSelectorProps {
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
+
   return isMobile;
 };
 
@@ -237,12 +233,12 @@ export function MealSelector({
                       <div className="font-medium">{meal.name}</div>
                       <div className="text-xs text-muted-foreground">
                         {meal.place_name} ·{' '}
-                        {meal.price ?? meal.avg_price
+                        {(meal.price ?? meal.avg_price)
                           ? new Intl.NumberFormat('ko-KR', {
                               style: 'currency',
                               currency: 'KRW',
                               maximumFractionDigits: 0,
-                            }).format(meal.price ?? (meal.avg_price ?? 0))
+                            }).format(meal.price ?? meal.avg_price ?? 0)
                           : 'No price yet'}
                       </div>
                     </div>
@@ -333,9 +329,7 @@ export function MealSelector({
             </DrawerContent>
           </Drawer>
           {detailsLink}
-          <FieldError
-            errors={error ? [{ message: error }] : undefined}
-          />
+          <FieldError errors={error ? [{ message: error }] : undefined} />
         </FieldContent>
       </Field>
     );
@@ -355,9 +349,7 @@ export function MealSelector({
           </PopoverContent>
         </Popover>
         {detailsLink}
-        <FieldError
-          errors={error ? [{ message: error }] : undefined}
-        />
+        <FieldError errors={error ? [{ message: error }] : undefined} />
       </FieldContent>
     </Field>
   );

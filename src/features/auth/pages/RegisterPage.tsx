@@ -346,14 +346,14 @@ export function RegisterPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.fullName && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.fullName && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('fullName')}
                     onFocus={() => handleFieldFocus('full-name')}
                     onBlur={(e) => {
-                        register('fullName').onBlur(e);
-                        handleFieldBlur('full-name');
+                      register('fullName').onBlur(e);
+                      handleFieldBlur('full-name');
                     }}
                   />
                   {errors.fullName && (
@@ -384,14 +384,14 @@ export function RegisterPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.email && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.email && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('email')}
                     onFocus={() => handleFieldFocus('register-email')}
                     onBlur={(e) => {
-                        register('email').onBlur(e);
-                        handleFieldBlur('register-email');
+                      register('email').onBlur(e);
+                      handleFieldBlur('register-email');
                     }}
                   />
                   {errors.email && (
@@ -422,14 +422,14 @@ export function RegisterPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.password && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.password && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('password')}
                     onFocus={() => handleFieldFocus('register-password')}
                     onBlur={(e) => {
-                        register('password').onBlur(e);
-                        handleFieldBlur('register-password');
+                      register('password').onBlur(e);
+                      handleFieldBlur('register-password');
                     }}
                   />
                   {errors.password && (
@@ -460,18 +460,20 @@ export function RegisterPage(): JSX.Element {
                     // required
                     disabled={isLoading}
                     className={cn(
-                      "h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm",
-                      errors.confirmPassword && "border-destructive focus-visible:ring-destructive"
+                      'h-11 rounded-lg bg-background/70 text-base shadow-sm transition focus-visible:ring-2 focus-visible:ring-primary/50 md:text-sm',
+                      errors.confirmPassword && 'border-destructive focus-visible:ring-destructive'
                     )}
                     {...register('confirmPassword')}
                     onFocus={() => handleFieldFocus('confirm-password')}
                     onBlur={(e) => {
-                        register('confirmPassword').onBlur(e);
-                        handleFieldBlur('confirm-password');
+                      register('confirmPassword').onBlur(e);
+                      handleFieldBlur('confirm-password');
                     }}
                   />
                   {errors.confirmPassword && (
-                    <p className="text-xs text-destructive mt-1">{errors.confirmPassword.message}</p>
+                    <p className="text-xs text-destructive mt-1">
+                      {errors.confirmPassword.message}
+                    </p>
                   )}
                 </motion.div>
 

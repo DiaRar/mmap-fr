@@ -19,11 +19,7 @@ import {
   DrawerTitle,
   DrawerTrigger,
 } from '@/components/ui/drawer';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   Field,
   FieldContent,
@@ -47,14 +43,14 @@ export interface RestaurantSelectorProps {
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
-  
+
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
     checkMobile();
     window.addEventListener('resize', checkMobile);
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
-  
+
   return isMobile;
 };
 
@@ -67,7 +63,7 @@ export function RestaurantSelector({
   const [open, setOpen] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const debouncedSearch = useDebouncedValue(inputValue, 300);
-  
+
   const { data: placesPage, isFetching } = usePlaces({ searchTerm: debouncedSearch });
   const places = placesPage?.results || [];
 
@@ -78,7 +74,7 @@ export function RestaurantSelector({
   const { mutateAsync: createPlace, isPending: isCreatingPlace } = useCreatePlace();
 
   // If value is set but we don't have the place in the list (because we searched something else),
-  // we still want to show the name. 
+  // we still want to show the name.
   // Ideally we would fetch the place by ID if we had it, but here we just have name 'value'.
   // We rely on the parent passing name.
 
@@ -118,8 +114,8 @@ export function RestaurantSelector({
 
   const CommandContent = (
     <>
-      <CommandInput 
-        placeholder="Search restaurants..." 
+      <CommandInput
+        placeholder="Search restaurants..."
         value={inputValue}
         onValueChange={setInputValue}
       />
@@ -128,7 +124,7 @@ export function RestaurantSelector({
         <CommandEmpty>
           <div className="flex flex-col items-center gap-3 py-6">
             <p className="text-sm text-muted-foreground">
-                {isFetching ? 'Searching...' : 'No restaurant found.'}
+              {isFetching ? 'Searching...' : 'No restaurant found.'}
             </p>
             {!isAddingNew && !isFetching && (
               <Button
@@ -199,10 +195,7 @@ export function RestaurantSelector({
                   </div> */}
                 </div>
                 <Check
-                  className={cn(
-                    'size-4',
-                    value === place.name ? 'opacity-100' : 'opacity-0'
-                  )}
+                  className={cn('size-4', value === place.name ? 'opacity-100' : 'opacity-0')}
                 />
               </CommandItem>
             ))}
@@ -254,9 +247,7 @@ export function RestaurantSelector({
               </div>
             </DrawerContent>
           </Drawer>
-          <FieldError
-            errors={error ? [{ message: error }] : undefined}
-          />
+          <FieldError errors={error ? [{ message: error }] : undefined} />
         </FieldContent>
       </Field>
     );
@@ -275,9 +266,7 @@ export function RestaurantSelector({
             <Command shouldFilter={false}>{CommandContent}</Command>
           </PopoverContent>
         </Popover>
-        <FieldError
-          errors={error ? [{ message: error }] : undefined}
-        />
+        <FieldError errors={error ? [{ message: error }] : undefined} />
       </FieldContent>
     </Field>
   );
