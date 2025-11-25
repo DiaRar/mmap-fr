@@ -9,7 +9,7 @@ import { Spinner } from '@/components/ui/spinner';
 
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import { useLocation } from '@/features/dashboard/hooks/useLocation';
-import { usePlaces } from '../api';
+import { usePlaces } from '@/features/dashboard/data/hooks';
 import { AddRestaurantCTA } from '../components/AddRestaurantCTA';
 import { RestaurantList } from '../components/RestaurantList';
 import { RestaurantSearch } from '../components/RestaurantSearch';

@@ -14,7 +14,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Separator } from '@/components/ui/separator';
 import { Spinner } from '@/components/ui/spinner';
 
-import { restaurantBounds, useRestaurantsQuery } from '@/features/dashboard/data/hooks';
+import { restaurantBounds, usePlaces } from '@/features/dashboard/data/hooks';
 import { useMealmapStore } from '@/features/dashboard/store/useMealmapStore';
 import type { PlaceBasicInfo } from '@/features/dashboard/types';
 
@@ -256,7 +256,8 @@ function formatDistanceLocal(meters?: number | null): string | undefined {
 }
 
 export function MapPage(): JSX.Element {
-  const { data: restaurants = [], isPending } = useRestaurantsQuery();
+  const { data: placesPage, isPending } = usePlaces();
+  const restaurants = placesPage?.results ?? [];
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const selectedRestaurantId = useMealmapStore((state) => state.selectedRestaurantId);
   const [selectedRoad, setSelectedRoad] = useState<string | null>(null);
@@ -377,9 +378,11 @@ export function MapPage(): JSX.Element {
                   </CardTitle>
                   <CardDescription className="text-sm text-muted-foreground">
                     {selectedRestaurant
-                      ? `${selectedRestaurant.cuisine ?? 'Restaurant'} · ${formatDistanceLocal(
-                          selectedRestaurant.distance_meters
-                        ) ?? formatRelativeReview(selectedRestaurant.lastReviewAt) ?? 'nearby'}`
+                      ? `${selectedRestaurant.cuisine ?? 'Restaurant'} · ${
+                          formatDistanceLocal(selectedRestaurant.distance_meters) ??
+                          formatRelativeReview(selectedRestaurant.lastReviewAt) ??
+                          'nearby'
+                        }`
                       : 'Tap a hotspot to see quick facts'}
                   </CardDescription>
                 </div>
@@ -408,7 +411,8 @@ export function MapPage(): JSX.Element {
                       <Navigation className="size-4 text-primary" />
                       {(typeof selectedRestaurant.distance_meters === 'number'
                         ? Math.max(1, Math.round(selectedRestaurant.distance_meters / 80))
-                        : undefined) ?? '—'} min walk
+                        : undefined) ?? '—'}{' '}
+                      min walk
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                       <Clock className="size-4 text-primary" />

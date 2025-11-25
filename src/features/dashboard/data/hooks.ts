@@ -1,10 +1,56 @@
 import { useMemo } from 'react';
-import { useQuery, type UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 
 import { apiRequest } from '@/lib/api';
 import { mockRestaurants } from '@/features/dashboard/data/mock-data';
-import { usePlaces } from '@/features/dashboard/feed/api';
-import type { MealRecommendation, MealResponse, PlaceBasicInfo, Page } from '@/features/dashboard/types';
+import { useLocation } from '@/features/dashboard/hooks/useLocation';
+import type {
+  MealRecommendation,
+  MealResponse,
+  PlaceBasicInfo,
+  Page,
+} from '@/features/dashboard/types';
+
+interface UsePlacesOptions {
+  lat?: number;
+  lng?: number;
+  radius_m?: number;
+  page?: number;
+  size?: number;
+  searchTerm?: string;
+}
+
+export function usePlaces(options: UsePlacesOptions = {}) {
+  const { userLocation } = useLocation();
+
+  // Use provided coords or user location
+  const lat = options.lat ?? userLocation?.lat ?? 0;
+  const lng = options.lng ?? userLocation?.lng ?? 0;
+
+  const queryKey = ['places', { ...options, lat, lng }];
+
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (lat !== undefined && lat !== null) params.append('lat', lat.toString());
+      if (lng !== undefined && lng !== null) params.append('long', lng.toString());
+      if (options.radius_m) params.append('radius_meters', options.radius_m.toString());
+      if (options.page) params.append('page', options.page.toString());
+      if (options.size) params.append('page_size', options.size.toString());
+
+      if (options.searchTerm) {
+        params.append('name', options.searchTerm);
+      }
+
+      params.append('sort_by', 'distance');
+      params.append('sort_order', 'asc');
+
+      return apiRequest<Page<PlaceBasicInfo>>(`/places?${params.toString()}`);
+    },
+    enabled: true,
+  });
+}
 
 // Emulated latency helper removed — backend-backed hooks are used instead.
 
@@ -23,10 +69,8 @@ const restaurantBounds = (() => {
   };
 })();
 
-// NOTE: The app previously returned mock restaurants here. We now reuse the
-// `usePlaces` hook (which calls the backend `/places` endpoint) inside
-// `useRestaurantsQuery` below. We keep the mock data available for
-// `restaurantBounds` and as a local fallback.
+// NOTE: Mock restaurants stay for `restaurantBounds` fallback. Live restaurant
+// lists now come from the backend via `usePlaces`.
 
 const priceFormatter = new Intl.NumberFormat('ko-KR', {
   style: 'currency',
@@ -167,29 +211,11 @@ export const fetchRecommendations = async (
   return meals.map(mapMealResponseToRecommendation);
 };
 
-export function useRestaurantsQuery(): UseQueryResult<PlaceBasicInfo[] | undefined> {
-  // Reuse the existing `usePlaces` hook so the restaurants list comes from
-  // the backend `/places` endpoint (with the same params / pagination
-  // behavior). `usePlaces` returns a paged response (`Page<PlaceBasicInfo>`)
-  // so we map it into the older `PlaceBasicInfo[]` shape on the `data` field
-  // to preserve callers that expect an array.
-  const placesQuery = usePlaces();
-
-  return useMemo(() => {
-    const results = (placesQuery.data as Page<PlaceBasicInfo> | undefined)?.results;
-
-    // Return the backend-provided objects (no extra derived/enriched fields).
-    return {
-      ...placesQuery,
-      data: results,
-    } as unknown as UseQueryResult<PlaceBasicInfo[] | undefined>;
-  }, [placesQuery]);
-}
-
 export function useRestaurantById(id?: string) {
-  const { data } = useRestaurantsQuery();
+  const { data } = usePlaces();
+  const restaurants = data?.results;
 
-  return useMemo(() => data?.find((restaurant) => restaurant.id === id), [data, id]);
+  return useMemo(() => restaurants?.find((restaurant) => restaurant.id === id), [restaurants, id]);
 }
 
 interface UseRecommendationsOptions {
