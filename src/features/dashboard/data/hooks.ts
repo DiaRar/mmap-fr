@@ -1,14 +1,12 @@
 import { useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, type UseQueryResult } from '@tanstack/react-query';
 
 import { apiRequest } from '@/lib/api';
 import { mockRestaurants } from '@/features/dashboard/data/mock-data';
-import type { MealRecommendation, MealResponse, PlaceBasicInfo } from '@/features/dashboard/types';
+import { usePlaces } from '@/features/dashboard/feed/api';
+import type { MealRecommendation, MealResponse, PlaceBasicInfo, Page } from '@/features/dashboard/types';
 
-const emulateLatency = async <T>(payload: T, delay = 400): Promise<T> =>
-  new Promise((resolve) => {
-    setTimeout(() => resolve(payload), delay);
-  });
+// Emulated latency helper removed — backend-backed hooks are used instead.
 
 const restaurantBounds = (() => {
   const lats = mockRestaurants.map((restaurant) => restaurant.latitude);
@@ -25,9 +23,10 @@ const restaurantBounds = (() => {
   };
 })();
 
-const fetchRestaurants = async (): Promise<PlaceBasicInfo[]> => {
-  return emulateLatency(mockRestaurants, 350);
-};
+// NOTE: The app previously returned mock restaurants here. We now reuse the
+// `usePlaces` hook (which calls the backend `/places` endpoint) inside
+// `useRestaurantsQuery` below. We keep the mock data available for
+// `restaurantBounds` and as a local fallback.
 
 const priceFormatter = new Intl.NumberFormat('ko-KR', {
   style: 'currency',
@@ -168,12 +167,23 @@ export const fetchRecommendations = async (
   return meals.map(mapMealResponseToRecommendation);
 };
 
-export function useRestaurantsQuery() {
-  return useQuery({
-    queryKey: ['restaurants'],
-    queryFn: fetchRestaurants,
-    staleTime: 1000 * 60 * 5,
-  });
+export function useRestaurantsQuery(): UseQueryResult<PlaceBasicInfo[] | undefined> {
+  // Reuse the existing `usePlaces` hook so the restaurants list comes from
+  // the backend `/places` endpoint (with the same params / pagination
+  // behavior). `usePlaces` returns a paged response (`Page<PlaceBasicInfo>`)
+  // so we map it into the older `PlaceBasicInfo[]` shape on the `data` field
+  // to preserve callers that expect an array.
+  const placesQuery = usePlaces();
+
+  return useMemo(() => {
+    const results = (placesQuery.data as Page<PlaceBasicInfo> | undefined)?.results;
+
+    // Return the backend-provided objects (no extra derived/enriched fields).
+    return {
+      ...placesQuery,
+      data: results,
+    } as unknown as UseQueryResult<PlaceBasicInfo[] | undefined>;
+  }, [placesQuery]);
 }
 
 export function useRestaurantById(id?: string) {
