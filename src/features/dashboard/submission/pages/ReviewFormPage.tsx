@@ -141,10 +141,10 @@ export function ReviewFormPage(): JSX.Element {
       restaurantName: '',
       mealId: undefined,
       mealName: '',
-      price: 12000,
+      price: undefined,
       queueEstimateMinutes: undefined,
       currency: '₩',
-      rating: 4,
+      rating: undefined,
       dietaryTags: [],
       visitDate: new Date().toISOString().split('T')[0],
       review: '',
@@ -393,6 +393,7 @@ export function ReviewFormPage(): JSX.Element {
                 mealId={watchMealId}
                 onChange={handleMealChange}
                 restaurantId={watchPlaceId}
+                disabled={!watchPlaceId}
                 currentPrice={watchPrice}
                 error={form.formState.errors.mealName?.message}
               />

@@ -22,7 +22,6 @@ const LABEL_MAX_W_CLASS = 'max-w-[160px]';
 const LABEL_TOP_CLASS = '-top-6';
 const MARKER_SIZE_CLASS = 'w-14 h-14';
 const PIN_SVG_SIZE = 20;
-const MIN_FIT_ZOOM = 12;
 
 export function truncate(s?: string, n = 30) {
   if (!s) return '';
@@ -82,7 +81,17 @@ function SetUserLocation({
     if (initialized.current) return;
 
     if (!navigator.geolocation) {
-      map.setView(fallback, 13);
+      // Only set view to fallback if the map is still at the default fallback center.
+      try {
+        const current = map.getCenter();
+        const closeToFallback =
+          Math.abs(current.lat - fallback[0]) < 0.0005 && Math.abs(current.lng - fallback[1]) < 0.0005;
+        if (closeToFallback) {
+          map.setView(fallback, 13);
+        }
+      } catch (e) {
+        map.setView(fallback, 13);
+      }
       initialized.current = true;
       return;
     }
@@ -91,7 +100,17 @@ function SetUserLocation({
       (pos) => {
         if (initialized.current) return;
         const center: [number, number] = [pos.coords.latitude, pos.coords.longitude];
-        map.setView(center);
+        try {
+          const current = map.getCenter();
+          const closeToFallback =
+            Math.abs(current.lat - fallback[0]) < 0.0005 && Math.abs(current.lng - fallback[1]) < 0.0005;
+          // If the user has already moved the map away from the fallback, don't recenter it.
+          if (closeToFallback) {
+            map.setView(center);
+          }
+        } catch (e) {
+          map.setView(center);
+        }
         initialized.current = true;
         onFound?.(center);
       },
@@ -186,47 +205,36 @@ function ZoomResponsiveMarkers({
   );
 }
 
-function FitBounds({
-  restaurants,
-  userLocation,
+// FitBounds removed — we don't auto-fit the map to avoid snapping the view.
+
+
+// Tracks the map center and reports it back to the caller on moves.
+function MapCenterTracker({
+  onCenterChange,
 }: {
-  restaurants: PlaceBasicInfo[];
-  userLocation?: [number, number] | null;
+  onCenterChange: (latlng: [number, number]) => void;
 }): JSX.Element | null {
   const map = useMap();
 
   useEffect(() => {
-    if ((!restaurants || restaurants.length === 0) && userLocation) {
-      map.setView(userLocation, MIN_FIT_ZOOM);
-      const t = setTimeout(() => map.invalidateSize(), 0);
-      return () => clearTimeout(t);
-    }
+    if (!map) return;
 
-    if (!restaurants || restaurants.length === 0) return;
-
-    const bounds = restaurants.map((r) => [
-      r.coordinates?.lat ?? r.latitude,
-      r.coordinates?.lng ?? r.longitude,
-    ]) as [number, number][];
-
-    if (userLocation) bounds.push(userLocation);
-
-    try {
-      const targetZoom = map.getBoundsZoom(bounds as any, false);
-      if (typeof targetZoom === 'number' && targetZoom < MIN_FIT_ZOOM) {
-        const centerLat = (restaurantBounds.maxLat + restaurantBounds.minLat) / 2;
-        const centerLng = (restaurantBounds.maxLng + restaurantBounds.minLng) / 2;
-        map.setView([centerLat, centerLng], MIN_FIT_ZOOM);
-      } else {
-        map.fitBounds(bounds, { padding: [40, 40] });
+    const report = () => {
+      try {
+        const c = map.getCenter();
+        onCenterChange([c.lat, c.lng]);
+      } catch (e) {
+        // ignore
       }
-    } catch (e) {
-      // ignore
-    }
+    };
 
-    const t = setTimeout(() => map.invalidateSize(), 0);
-    return () => clearTimeout(t);
-  }, [map, restaurants, userLocation]);
+    // Report center only after user finishes moving the map
+    map.on('moveend', report);
+
+    return () => {
+      map.off('moveend', report);
+    };
+  }, [map, onCenterChange]);
 
   return null;
 }
@@ -256,7 +264,18 @@ function formatDistanceLocal(meters?: number | null): string | undefined {
 }
 
 export function MapPage(): JSX.Element {
-  const { data: placesPage, isPending } = usePlaces();
+  const defaultCenter: [number, number] = [
+    (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
+    (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
+  ];
+
+  const [mapCenter, setMapCenter] = useState<[number, number] | null>(null);
+  const RADIUS_METERS = 2000; // 2 km
+  const { data: placesPage, isPending } = usePlaces({
+    lat: mapCenter?.[0] ?? defaultCenter[0],
+    lng: mapCenter?.[1] ?? defaultCenter[1],
+    radius_m: RADIUS_METERS,
+  });
   const restaurants = placesPage?.results ?? [];
   const [userLocation, setUserLocation] = useState<[number, number] | null>(null);
   const selectedRestaurantId = useMealmapStore((state) => state.selectedRestaurantId);
@@ -314,27 +333,18 @@ export function MapPage(): JSX.Element {
         >
           <div className="relative h-[420px] overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-br from-primary/5 via-background to-secondary/40">
             <div className="absolute inset-0 bg-[linear-gradient(120deg,rgba(255,255,255,0.15)_1px,transparent_1px),linear-gradient(rgba(255,255,255,0.15)_1px,transparent_1px)] bg-[length:140px_140px] opacity-60" />
-            {isPending ? (
-              <div className="flex h-full items-center justify-center">
-                <Spinner />
-              </div>
-            ) : (
-              <MapContainer
-                center={[
-                  (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
-                  (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
-                ]}
-                zoom={13}
-                className="w-full h-full"
-                style={{ borderRadius: '1rem' }}
-              >
+            <div className="w-full h-full relative">
+              <MapContainer center={defaultCenter} zoom={13} className="w-full h-full" style={{ borderRadius: '1rem' }}>
                 <SetUserLocation
-                  fallback={[
-                    (restaurantBounds.maxLat + restaurantBounds.minLat) / 2,
-                    (restaurantBounds.maxLng + restaurantBounds.minLng) / 2,
-                  ]}
-                  onFound={(latlng) => setUserLocation((prev) => prev ?? latlng)}
+                  fallback={defaultCenter}
+                  onFound={(latlng) => {
+                    setUserLocation((prev) => prev ?? latlng);
+                    // Initialize mapCenter to the found user location if not yet set
+                    setMapCenter((prev) => prev ?? latlng);
+                  }}
                 />
+                {/* Track map center so `usePlaces` can load restaurants near the current view */}
+                <MapCenterTracker onCenterChange={(latlng) => setMapCenter(latlng)} />
                 <TileLayer
                   url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
                   attribution={
@@ -343,7 +353,8 @@ export function MapPage(): JSX.Element {
                   subdomains={['a', 'b', 'c', 'd']}
                   maxZoom={19}
                 />
-                <FitBounds restaurants={restaurants} userLocation={userLocation} />
+
+                {/* intentionally do not auto-fit bounds — keep map where the user placed it */}
 
                 <ZoomResponsiveMarkers
                   restaurants={restaurants}
@@ -364,7 +375,13 @@ export function MapPage(): JSX.Element {
                   />
                 )}
               </MapContainer>
-            )}
+
+              {isPending ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+                  <Spinner />
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <Separator />
