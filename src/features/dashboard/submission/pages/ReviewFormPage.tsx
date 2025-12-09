@@ -55,18 +55,18 @@ const reviewFormSchema = z
     price: z.number({ invalid_type_error: 'Share the price (₩1,000+).' }).optional(),
     queueEstimateMinutes: z
       .number({
-        required_error: 'Show how long you waited for your meal.',
         invalid_type_error: 'Share the wait time in minutes.',
       })
       .int()
-      .min(0, 'Wait time must be 0 or more minutes.'),
+      .min(0, 'Wait time must be 0 or more minutes.')
+      .optional(),
     currency: z
       .enum(CURRENCIES, {
         message: 'Select a currency.',
       })
       .optional(),
     rating: z.number().min(1, 'Rate at least 1 star.').max(5, 'Max 5 stars.'),
-    dietaryTags: z.array(z.enum(dietaryOptions)).min(1, 'Pick at least one dietary tag.'),
+    dietaryTags: z.array(z.enum(dietaryOptions)).optional(),
     visitDate: z.string().min(1, 'Tell us when you visited.'),
     review: z.string().min(10, 'Leave at least 10 characters for context.'), // Reduced for easier testing
     photo: z.any().optional(), // File object
@@ -102,10 +102,10 @@ type ReviewFormValues = {
   mealId?: string;
   mealName: string;
   price?: number;
-  queueEstimateMinutes: number;
+  queueEstimateMinutes?: number;
   currency?: CurrencyOption;
   rating: number;
-  dietaryTags: DietaryTag[];
+  dietaryTags?: DietaryTag[];
   visitDate: string;
   review: string;
   photo?: File;
@@ -186,7 +186,7 @@ export function ReviewFormPage(): JSX.Element {
   const watchPrice = form.watch('price');
   const currentRating = form.watch('rating');
   const currentCurrency = form.watch('currency') ?? '₩';
-  const currentDietaryTags = form.watch('dietaryTags');
+  const currentDietaryTags = form.watch('dietaryTags') ?? [];
   const watchMealName = form.watch('mealName');
   const watchMealId = form.watch('mealId');
   const watchPlaceId = form.watch('placeId');
@@ -201,7 +201,7 @@ export function ReviewFormPage(): JSX.Element {
 
   const handleDietaryToggle = useCallback(
     (tag: DietaryTag) => {
-      const existing = form.getValues('dietaryTags');
+      const existing = form.getValues('dietaryTags') ?? [];
       const updated = existing.includes(tag)
         ? existing.filter((option) => option !== tag)
         : [...existing, tag];
@@ -274,6 +274,7 @@ export function ReviewFormPage(): JSX.Element {
 
   const onSubmit = async (values: ReviewFormValues) => {
     const pointsAwarded = 50;
+    const selectedDietaryTags = values.dietaryTags ?? [];
 
     try {
       if (
@@ -296,13 +297,13 @@ export function ReviewFormPage(): JSX.Element {
         price: values.price,
         waiting_time_minutes: values.queueEstimateMinutes,
         images: values.photo ? [values.photo] : [],
-        is_vegan: values.dietaryTags.includes('Vegan') ? 'yes' : 'no',
-        is_halal: values.dietaryTags.includes('Halal') ? 'yes' : 'no',
-        is_vegetarian: values.dietaryTags.includes('Vegetarian') ? 'yes' : 'no',
-        is_spicy: values.dietaryTags.includes('Spicy') ? 'yes' : 'no',
-        is_gluten_free: values.dietaryTags.includes('Gluten-free') ? 'yes' : 'no',
-        is_dairy_free: values.dietaryTags.includes('Dairy-free') ? 'yes' : 'no',
-        is_nut_free: values.dietaryTags.includes('Nut-free') ? 'yes' : 'no',
+        is_vegan: selectedDietaryTags.includes('Vegan') ? 'yes' : undefined,
+        is_halal: selectedDietaryTags.includes('Halal') ? 'yes' : undefined,
+        is_vegetarian: selectedDietaryTags.includes('Vegetarian') ? 'yes' : undefined,
+        is_spicy: selectedDietaryTags.includes('Spicy') ? 'yes' : undefined,
+        is_gluten_free: selectedDietaryTags.includes('Gluten-free') ? 'yes' : undefined,
+        is_dairy_free: selectedDietaryTags.includes('Dairy-free') ? 'yes' : undefined,
+        is_nut_free: selectedDietaryTags.includes('Nut-free') ? 'yes' : undefined,
       });
 
       addPoints(pointsAwarded);

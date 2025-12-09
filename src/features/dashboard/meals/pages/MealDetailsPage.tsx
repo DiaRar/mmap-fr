@@ -149,6 +149,7 @@ function MealReviewList({ reviews }: MealReviewListProps): JSX.Element {
     <div className="space-y-4">
       {reviews.map((review) => {
         const badges = extractReviewTags(review);
+        const reviewImage = review.first_image?.image_url;
         return (
           <Card
             key={review.id}
@@ -171,7 +172,19 @@ function MealReviewList({ reviews }: MealReviewListProps): JSX.Element {
                 </div>
               </div>
               <p className="text-sm text-foreground">
-                {review.text ?? 'No written review provided.'}
+                <div className="flex gap-3">
+                  {reviewImage ? (
+                    <div className="relative h-20 w-28 shrink-0 overflow-hidden rounded-xl border border-border/60 bg-muted/40">
+                      <img
+                        src={reviewImage}
+                        alt="Review photo"
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    </div>
+                  ) : null}
+                  <span>{review.text ?? 'No written review provided.'}</span>
+                </div>
               </p>
               <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                 {typeof review.price === 'number' ? (

@@ -139,7 +139,7 @@ export function useUpdateMeal() {
       }
 
       return apiRequest('/meals/' + meal_id, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
         },
