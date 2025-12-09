@@ -47,6 +47,7 @@ export interface MealSelectorProps {
   restaurantId?: string;
   error?: string;
   currentPrice?: number;
+  disabled?: boolean;
 }
 
 const useIsMobile = () => {
@@ -69,6 +70,7 @@ export function MealSelector({
   restaurantId,
   error,
   currentPrice,
+  disabled,
 }: MealSelectorProps): JSX.Element {
   const [open, setOpen] = useState(false);
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -269,12 +271,17 @@ export function MealSelector({
     </>
   );
 
+  const effectiveDisabled = Boolean(disabled || !restaurantId);
+
   const triggerButton = (
     <Button
       variant="outline"
       role="combobox"
       aria-expanded={open}
-      className="w-full justify-between font-normal transition-all hover:border-primary/40 hover:bg-primary/5"
+      disabled={effectiveDisabled}
+      className={`w-full justify-between font-normal transition-all hover:border-primary/40 hover:bg-primary/5 ${
+        effectiveDisabled ? 'opacity-60 pointer-events-none' : ''
+      }`}
     >
       <span className={cn('truncate', !mealName && 'text-muted-foreground')}>
         {selectedMeal ? (
@@ -288,7 +295,7 @@ export function MealSelector({
             <span>{mealName}</span>
           </div>
         ) : (
-          'Select meal...'
+          (effectiveDisabled ? 'Select a restaurant first' : 'Select meal...')
         )}
       </span>
       <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
