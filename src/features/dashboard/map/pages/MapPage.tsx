@@ -468,8 +468,12 @@ export function MapPage(): JSX.Element {
                     </Button>
                     <Button
                       className="flex-1 rounded-full"
-                      onClick={() => navigate('/')}
+                      onClick={() => {
+                        if (!selectedRestaurant?.id) return;
+                        navigate(`/restaurants/${selectedRestaurant.id}`);
+                      }}
                       type="button"
+                      disabled={!selectedRestaurant?.id}
                     >
                       View reviews
                     </Button>
